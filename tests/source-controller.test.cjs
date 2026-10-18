@@ -60,3 +60,17 @@ test('replacing a source keeps the CeCo but cannot silently broaden an unavailab
  assert.equal(f.state.cafe.filters.tienda[0],'CeCo 38101');assert.equal(f.state.cafe.filters.mes[0],'Ene 2026');
  assert.equal(f.context.PBT_WEEKLY.engine.calculate({Tienda:f.state.cafe.filters.tienda,Mes:f.state.cafe.filters.mes},'CAFE').valid,false);
 });
+
+test('a verified saved repository is usable while a slow manifest is still loading',async()=>{
+ const pack=await makePack(),network=publisher(pack),repository=await io.loadRepository(network);
+ const saved={repository:{text:repository.text,manifest:repository.manifest},label:'data/motores/',kind:'repo',readAt:'2026-10-17T08:00:00.000Z'};
+ let release;const calls=[],f=fixture(url=>{calls.push(url);return new Promise(resolve=>release=()=>network(url).then(resolve));},saved),starting=f.start();
+ for(let i=0;i<1000&&!release;i++)await new Promise(setImmediate);
+ assert.equal(f.context.PBT_WEEKLY.ready,true);assert.equal(f.context.PBT_WEEKLY.loading,true);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').unidades,100);
+ release();await starting;assert.deepEqual(calls,['data/motores/manifest.json']);assert.equal(f.stored,saved);
+});
+test('a damaged saved repository is not shown and is replaced only by a verified network result',async()=>{
+ const pack=await makePack(),network=publisher(pack),repository=await io.loadRepository(network);
+ const f=fixture(network,{repository:{text:repository.text+'x',manifest:repository.manifest},kind:'repo'});await f.start();
+ assert.equal(f.context.PBT_WEEKLY.ready,true);assert.equal(f.stored.repository.text,repository.text);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').unidades,100);
+});

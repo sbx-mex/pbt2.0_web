@@ -21,7 +21,7 @@ def stage_site(destination):
     with tempfile.TemporaryDirectory(prefix='pbt-validado-',dir=destination.parent) as temporary:
         stage=Path(temporary)/'site';stage.mkdir()
         for name in ['index.html','manifest.json','sw.js']:shutil.copy2(ROOT/name,stage/name)
-        for name in ['css','icons','js']:shutil.copytree(ROOT/name,stage/name,ignore=shutil.ignore_patterns('data.js'))
+        for name in ['css','icons','js']:shutil.copytree(ROOT/name,stage/name,ignore=shutil.ignore_patterns('data.js','excel_data.js','.*'))
         (stage/'data/motores').mkdir(parents=True)
         shutil.copy2(ROOT/'data/project.json',stage/'data/project.json')
         for name in ['indice.json','manifest.json']:shutil.copy2(ROOT/'data/motores'/name,stage/'data/motores'/name)
@@ -31,7 +31,8 @@ def stage_site(destination):
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--site',type=Path);args=parser.parse_args()
     if args.site and args.site.exists():parser.error('La carpeta de salida ya existe; usa otra ruta.')
-    checks=[[sys.executable,'scripts/build_weekly_motor.py'],
+    checks=[[sys.executable,'scripts/build_plan_catalog.py'],
+            [sys.executable,'scripts/build_weekly_motor.py'],
             [sys.executable,'scripts/build_store_directory.py','--check'],
             [sys.executable,'-m','unittest','discover','-s','tests','-v'],
             ['node','--test',*[str(p.relative_to(ROOT)) for p in sorted((ROOT/'tests').glob('*.test.cjs'))]],
@@ -40,7 +41,7 @@ def main():
     try:
         for command in checks:subprocess.run(command,cwd=ROOT,check=True)
         if args.site:stage_site(args.site)
-        print(json.dumps({'estado':'VERDE','revision':'6 controles aprobados','sitio':str(args.site) if args.site else None},ensure_ascii=False))
+        print(json.dumps({'estado':'VERDE','revision':str(len(checks))+' controles aprobados','sitio':str(args.site) if args.site else None},ensure_ascii=False))
         return 0
     except (subprocess.CalledProcessError,OSError,ValueError) as error:
         print(json.dumps({'estado':'ROJO','error':str(error),'sitio_publicado':False},ensure_ascii=False));return 1
