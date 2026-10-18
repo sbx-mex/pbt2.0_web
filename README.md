@@ -1,5 +1,39 @@
 # pbt2.0_web
 
+## V19 · Motores semanales, contexto manual y PDF carta
+
+Reemplaza los archivos de este ZIP en la raíz del repositorio, conservando sus carpetas y el resto del proyecto. Base de esta entrega: `ca81806dd2b9bc40fdc7d4c3d862dbd29d779311`.
+
+### Operación
+
+- **Motores semanales:** carpeta visible `data/motores/`. Contiene los tres CSV iniciales originales; permite agregar semanas y subcarpetas por año.
+- **Carpeta local:** `Abrir carpeta CSV` y `Releer carpeta` identifican la carpeta y procesan archivos en segundo plano. En navegadores sin acceso persistente, usa `Elegir CSV` o selecciona la carpeta de nuevo. El acceso es de lectura; los CSV locales no se envían al servidor.
+- **Mes:** único filtro visible de periodo. El mes sigue el calendario 4-4-5 del PBT original, según la semana (`AAAASS`) de cada registro: por ejemplo, 01–04 es enero, 05–08 febrero y 48–53 diciembre. La fecha del encabezado del reporte no sustituye esa columna. No hay filtros visibles de trimestre o semana.
+- **Cálculo Automático / Manual:** automático conserva la regla original del reloj del dispositivo. Manual permite elegir DayPart y Weekday/Weekend y mantiene el contexto al cambiar de minuto o recargar. Cada layout conserva su modo.
+- **Unidades separadas de venta:** el nuevo origen calcula porcentajes sobre unidades actuales. `Usar base original` recupera los cálculos originales sobre venta sin mezclarlos con CSV. Las tiendas CSV se muestran por CeCo; DT se determina por presencia de ese canal en el conjunto de semanas.
+- **Carga estable:** valida encabezados, codificación, contexto, unidades y semana. Conserva ajustes negativos, omite copias idénticas y rechaza semanas conflictivas o filas repetidas. Una lectura fallida conserva el motor anterior.
+- **Histórico:** agrega un CSV por semana; para corregir una semana reemplaza su archivo. El índice compacto consolida las semanas y concilia registros, unidades actuales y unidades AA por fuente. AA no se suma al cálculo actual.
+- **PDF carta:** exporta el plan CAFÉ o DT activo, con mes, tienda y contexto, a una vista de impresión Carta vertical con márgenes de 12.7 mm. Pulsa `Imprimir o guardar PDF`. El layout ocupa la primera hoja y las rutinas continúan con encabezados repetidos, sin comprimirlas en una sola página. El diálogo de impresión debe conservar tamaño Carta y escala 100%; desactiva los encabezados y pies del navegador y conserva los gráficos de fondo.
+- **PWA:** usa caché de interfaz V19, vuelve a consultar el índice y permite recuperar la última lectura. Los nombres, fotos, plays, rutinas, coordenadas, proporciones de columnas y el archivo `js/excel_data.js` se conservan.
+
+### Publicación automática de futuras semanas
+
+Una sola vez, selecciona **Settings → Pages → Build and deployment → Source → GitHub Actions** en este repositorio. El workflow incluido valida, genera el índice desde todos los CSV y publica sólo cuando las comprobaciones pasan. Los cambios en `main` activan el flujo; las solicitudes de cambio se validan sin publicar. No es necesario volver a subir los archivos pesados originales del motor.
+
+Después coloca el CSV de cada semana en `data/motores/` y espera que termine **Validar y publicar PBT semanal**. La carpeta se mantiene visible en GitHub; el sitio publica el índice optimizado y sus recursos, sin descargar todos los CSV durante el arranque.
+
+Si mantienes Pages desde la rama, ejecuta Python y sube también `data/motores/indice.json` cada vez que cambien los CSV:
+
+```bash
+python scripts/build_weekly_motor.py
+python scripts/build_weekly_motor.py --check
+python -m unittest discover -s tests -v
+node --test tests/*.test.cjs
+python scripts/audit_weekly_project.py
+```
+
+El generador y las pruebas nuevas utilizan la biblioteca estándar de Python y Node; no requieren instalar paquetes. Las reglas del motor se documentan en `data/motores/README.md`.
+
 ## V18 - Experiencia operativa y auditoría Python reproducible
 - Se conserva íntegro el motor V17: coordenadas, plays, rutinas, filtros, Product Mix y cálculos no fueron reescritos.
 - Nueva guía visual de tres pasos, jerarquía más clara, estados de carga y navegación accesible sin alterar el layout original.
