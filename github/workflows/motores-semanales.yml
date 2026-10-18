@@ -1,0 +1,63 @@
+name: Validar PBT semanal
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pbt-weekly-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Descargar proyecto
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Preparar Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Generar índice desde los CSV semanales
+        run: python scripts/build_weekly_motor.py
+      - name: Pruebas Python
+        run: python -m unittest discover -s tests -v
+      - name: Conciliar lector JavaScript con Python
+        run: node --test tests/*.test.cjs
+      - name: Auditar porcentajes contra unidades crudas
+        run: python scripts/audit_percentages.py
+      - name: Validar aplicación, motor original y formato carta
+        run: python scripts/audit_weekly_project.py
+      - name: Preparar sitio optimizado
+        if: github.event_name != 'pull_request' && vars.PBT_DEPLOY_PAGES == 'true'
+        run: |
+          mkdir -p _site/data/motores
+          cp index.html manifest.json sw.js _site/
+          cp -R css icons js _site/
+          cp data/project.json _site/data/
+          cp data/motores/indice.json _site/data/motores/
+          touch _site/.nojekyll
+      - name: Guardar sitio para Pages
+        if: github.event_name != 'pull_request' && vars.PBT_DEPLOY_PAGES == 'true'
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
+        with:
+          path: _site
+  publicar:
+    if: github.event_name != 'pull_request' && vars.PBT_DEPLOY_PAGES == 'true'
+    needs: validar
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar versión validada
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
+
