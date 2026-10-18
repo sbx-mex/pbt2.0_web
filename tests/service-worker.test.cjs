@@ -7,7 +7,7 @@ function fixture(){
   return {match:async request=>items.get(key(request))?.clone(),put:async(request,response)=>items.set(key(request),response.clone()),keys:async()=>[...items.keys()].map(url=>({url})),delete:async request=>items.delete(key(request)),addAll:async entries=>{for(const entry of entries)items.set(key(entry),await network({url:key(entry)}));}};
  }};
  const self={registration:{scope},location:{origin:new URL(scope).origin},clients:{claim:async()=>{}},skipWaiting:async()=>{},addEventListener:(name,fn)=>handlers[name]=fn};
- vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../sw.js'),'utf8'),{self,caches,URL,Headers,Response,fetch:request=>network(request)});
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../sw.js'),'utf8'),{self,caches,URL,Headers,Response,AbortController,setTimeout,clearTimeout,fetch:request=>network(request)});
  return {scope,databases,caches,setNetwork:fn=>network=fn,install:async()=>{let promise;handlers.install({waitUntil:value=>promise=value});await promise;},activate:async()=>{let promise;handlers.activate({waitUntil:value=>promise=value});await promise;},request:async(route,mode='cors')=>{let promise;handlers.fetch({request:{url:new URL(route,scope).href,method:'GET',mode},respondWith:value=>promise=value});return promise;}};
 }
 test('weekly index is refreshed even when an old copy is cached',async()=>{
@@ -23,15 +23,10 @@ test('cache cleanup preserves other projects and their saved files',async()=>{
  await cache.put('https://example.test/other/js/data.js',new Response('other'));await f.caches.open('controlops-cache');await f.activate();
  assert.ok(f.databases.has('controlops-cache'));assert.ok(await cache.match('https://example.test/other/js/data.js'));assert.equal(await cache.match(f.scope+'js/data.js'),undefined);
 });
-test('V24 keeps the cached original plays available across the interface upgrade',async()=>{
- const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v20-data',cache=await f.caches.open(name);await cache.put(f.scope+'js/excel_data.js?v=20',new Response('original engine'));
- await f.activate();f.setNetwork(async()=>{throw Error('offline');});assert.equal(await(await f.request('js/excel_data.js?v=20')).text(),'original engine');
-});
-
-test('V24 removes the retired sale cube from its cache while preserving the original plays',async()=>{
+test('retired engines and their caches are removed only in this project scope',async()=>{
  const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v20-data',cache=await f.caches.open(name);
  await cache.put(f.scope+'js/data.js?v=20',new Response('obsolete sales'));await cache.put(f.scope+'js/excel_data.js?v=20',new Response('plays'));
- await f.activate();assert.equal(await cache.match(f.scope+'js/data.js?v=20'),undefined);assert.equal(await(await cache.match(f.scope+'js/excel_data.js?v=20')).text(),'plays');
+ await f.activate();assert.equal(f.databases.has(name),false);assert.equal(await f.request('js/excel_data.js?v=20'),undefined);
 });
 
 test('a malformed HTML response preserves the previous JSON backup',async()=>{

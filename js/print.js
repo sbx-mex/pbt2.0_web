@@ -14,8 +14,10 @@
  window.buildPBTSnapshot=function(tab,today=new Date()){
   if(!['cafe','dt'].includes(tab))throw Error('Selecciona CAFÉ o DRIVE THRU para exportar.');
   if(state[tab].filters.tienda.length!==1)throw Error('Selecciona una tienda antes de exportar.');
+  if(window.PBT_PLAN&&!PBT_PLAN.ready)throw Error('Espera a que termine de cargar el plan.');
   const v=valuesFromData(tab),data=v.raw;
   if(!data.registros||data.basis!=='units'||!data.valid)throw Error(data.reason||'No hay datos válidos para exportar.');
+  if(window.PBT_PLAN&&!getPlay(tab,state[tab].partners,v.planChannels,v.planMix).play)throw Error('Selecciona una combinación con plan original antes de exportar.');
   const current=state[tab],ceco=PBT_DIRECTORY.codeOf(current.filters.tienda[0]);
   if(!ceco)throw Error('Esta tienda no tiene cruce CeCo en el directorio.');
   const areas=[...$(tab+'_layout').querySelectorAll('.partner-marker')].map(node=>({
@@ -33,7 +35,7 @@
  function script(src){return new Promise((resolve,reject)=>{const node=document.createElement('script');node.src=src;node.onload=resolve;node.onerror=()=>{node.remove();reject(Error('No se pudo cargar la exportación. Revisa la conexión y vuelve a intentar.'));};document.head.appendChild(node);});}
  async function libraries(){
   if(window.PDFLib&&window.PBT_PDF)return;
-  if(!loading)loading=(async()=>{if(!window.PDFLib)await script('js/vendor/pdf-lib.min.js?v=1.17.1');if(!window.PBT_PDF)await script('js/pdf-renderer.js?v=24');})().catch(error=>{loading=null;throw error;});
+  if(!loading)loading=(async()=>{if(!window.PDFLib)await script('js/vendor/pdf-lib.min.js?v=27');if(!window.PBT_PDF)await script('js/pdf-renderer.js?v=27');})().catch(error=>{loading=null;throw error;});
   await loading;
  }
  let exportDialog=null;

@@ -18,7 +18,7 @@ test('all 459256 compact lookups return exactly the original play, including the
 });
 
 test('repeated and tied nearest selections retain the first original candidate',()=>{
- const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),start=html.indexOf('function dist('),end=html.indexOf('function cellPos(',start);
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8')+'<script>'+fs.readFileSync(path.join(__dirname,'../js/ui.js'),'utf8')+'</script>',start=html.indexOf('function dist('),end=html.indexOf('function cellPos(',start);
  const context={EXCEL_DATA:compact,NEAREST:{cafe:new Map(),dt:new Map()},round0:Math.round};vm.createContext(context);vm.runInContext(html.slice(start,end),context);
  const nearest=(tab,values)=>{let best=original[tab+'Candidates'][0],distance=Infinity;for(const row of original[tab+'Candidates']){const d=row.reduce((sum,value,i)=>sum+(value-values[i])**2,0);if(d<distance){distance=d;best=row;if(d===0)break;}}return best;};
  for(const tab of ['cafe','dt'])for(let i=0;i<60;i++){

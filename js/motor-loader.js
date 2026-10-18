@@ -1,6 +1,7 @@
 /* Validated, bounded source loading. No UI or changes to the PBT calculation. */
 (function(root){
  'use strict';
+ const assets=typeof module!=='undefined'&&module.exports?require('./asset-loader.js'):root.PBT_ASSETS;
  const core=typeof module!=='undefined'&&module.exports?require('./weekly-core.js'):root.PBT_WEEKLY_CORE;
  const MAX_INDEX=64*1024*1024,MAX_TOTAL=512*1024*1024;
  const verified=new WeakSet();
@@ -47,9 +48,11 @@
   if(previous&&verified.has(previous)&&sameManifest(previous.manifest,manifest)){
    checkSignal(signal);const result={...previous,unchanged:true,offline:response.headers.get('X-PBT-Offline')==='1'};verified.add(result);return result;
   }
-  const index=await fetcher('data/motores/indice.json',options),text=await boundedText(index,MAX_INDEX,signal);
+  let text,indexOffline=false;
+  if(manifest.index.gzip){const result=await assets.text(fetcher,'data/motores/indice.json',manifest.index,{signal,max:MAX_INDEX});text=result.text;indexOffline=result.offline;}
+  else{const index=await fetcher('data/motores/indice.json',options);text=await boundedText(index,MAX_INDEX,signal);indexOffline=index.headers.get('X-PBT-Offline')==='1';}
   const result=await restoreRepository({manifest,text},signal);
-  result.offline=response.headers.get('X-PBT-Offline')==='1'||index.headers.get('X-PBT-Offline')==='1';return result;
+  result.offline=response.headers.get('X-PBT-Offline')==='1'||indexOffline;return result;
  }
  function mergeHistory(previous,incoming){
   core.validatePack(previous);core.validatePack(incoming);

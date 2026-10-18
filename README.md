@@ -1,39 +1,53 @@
-# PBT Web 2.0 · V26
+# PBT Web 2.0 · V27
 
-Corrige el plan en blanco y acelera la consulta de motores sobre `34d372a8a577c4f2739d23aab177995be7952283` de `sbx-mex/pbt2.0_web`.
+Mejora de arranque, navegación y publicación sobre `sbx-mex/pbt2.0_web`, commit `c3a5437ac01f2adff857d5bec99395eb13563793` del 18 de octubre de 2026. Conserva el motor original PBT.24, sus coordenadas, rutinas, desempates, calendario 4-4-5, porcentajes por unidades y formato de PDF carta.
 
-## Instalar
+## Abrir la copia lista del ZIP
 
-Descomprime y reemplaza **sólo los archivos del ZIP en la raíz del repositorio**, conservando sus carpetas. No subas el ZIP cerrado ni una carpeta adicional. Mantén los CSV y los demás archivos existentes.
+Descomprime **todo el ZIP** y ejecuta **INICIAR_PBT.bat** en Windows. Requiere Python 3.10 o posterior. En macOS/Linux: `python3 iniciar.py`. Abre PBT en `http://127.0.0.1:8765/`; mantén abierta la consola. No abras `index.html` con doble clic.
 
-Conserva **Settings → Pages → Source → GitHub Actions**. El workflow existente ejecuta `validar` antes de `publicar`. Python genera el catálogo compacto durante esa revisión; `js/plan-catalog.js` es un resultado de compilación y no se incluye en el ZIP ni se edita a mano. La publicación lo incorpora automáticamente si pasan los siete controles.
+La carpeta `PBT_LISTO` del paquete contiene el sitio preparado y los datos auditados. No necesita Node, paquetes Python, cuenta, ni conexión externa para abrirse mediante el servidor local. La URL y el navegador determinan dónde se guarda tu equipo: el equipo capturado en GitHub Pages no aparece automáticamente en localhost.
 
-## Cambios de carga
+## Actualizar el repositorio
 
-- **Plan visible.** Se elimina la referencia al botón Ampliar retirado en V25: provocaba un error que detenía el renderizado.
-- **Catálogo de planes más ligero.** Python transforma el original de 23.9 MB en 6.4 MB y verifica sus 459,256 búsquedas. Conserva candidatos, planes, coordenadas, rutinas y desempates originales. El navegador ya no descarga `excel_data.js`.
-- **Consulta por CeCo.** El motor usa un índice por tienda para evitar recorrer todo el histórico en cada filtro. Los porcentajes, unidades y AA conservan sus resultados.
-- **Respaldo antes de la red.** Recupera el motor guardado y lo valida antes de mostrarlo; después comprueba si existe una actualización.
-- **Sólo descarga cuando hay cambios.** Consulta el manifiesto y reutiliza el índice verificado si coincide. Evita descargar otra vez el índice completo cuando no cambió.
-- **Actualización protegida.** Comprueba tamaño, SHA-256, semanas y relación entre índice y CSV. Una actualización inválida no reemplaza el plan activo.
-- **Menos trabajo repetido.** Reutiliza búsquedas de mezcla y elimina renderizados duplicados al elegir una tienda.
+El ZIP incluye `actualizar_pbt.py` y `actualizacion/`. Desde la carpeta del ZIP:
 
-El primer acceso necesita descargar los motores. Una conexión lenta puede afectar esa primera descarga. Los accesos posteriores aprovechan el respaldo mientras esté disponible en el dispositivo. Los CSV siguen siendo la fuente de porcentajes; la base original conserva la selección de planes y su distribución.
+```bash
+python actualizar_pbt.py "RUTA_A_TU_REPOSITORIO"
+python actualizar_pbt.py "RUTA_A_TU_REPOSITORIO" --aplicar
+```
 
-## Equipo, móvil y PDF
+El primer comando revisa sin modificar. El segundo requiere Python 3.12 y Node 22 o posterior: comprueba la versión y las fuentes, valida una copia temporal, crea un respaldo y aplica sólo los archivos del paquete. Retira `js/data.js` y `icons/.gitkeep` sólo si su contenido coincide con el obsoleto auditado. Si encuentra cambios posteriores, se detiene para conservarlos. No borra CSV, nombres ni fotos. Revisa `git diff`, confirma los cambios y súbelos a `main`.
 
-Se mantienen las mejoras de V24/V25: equipo y fotos por CeCo, recuperación de filtros, selección de tiendas Café/DT según unidades, tabla adaptable, plan sin botón Ampliar y PDF sin pie de página. El PDF conserva los recuadros, margen carta y nombre dinámico. En iOS, **PDF listo** permite descargar y compartir cuando el navegador lo admite.
+Restauración, antes de hacer nuevas ediciones:
 
-El guardado corresponde a **este dispositivo, navegador y dirección del proyecto**. Borrar los datos del sitio elimina el respaldo. Si el navegador no permite guardarlo, la aplicación lo indica y conserva los datos durante la sesión. La primera apertura permanece vacía hasta elegir una tienda; sólo se recuperan selecciones guardadas que sigan disponibles en los motores.
+```bash
+python actualizar_pbt.py --restaurar "RUTA_DEL_RESPALDO" --aplicar
+```
+
+El respaldo se crea junto al repositorio. La restauración rechaza archivos editados después de instalar. Si hay cambios posteriores, el respaldo conserva los originales para recuperarlos manualmente.
+
+## Publicación y carga
+
+Conserva **Settings → Pages → Source → GitHub Actions**. El workflow `motores-semanales.yml` ejecuta Python antes de publicar. No subas la carpeta completa del ZIP a la raíz de GitHub: usa el instalador; `PBT_LISTO` es la copia local preparada.
+
+- La interfaz aparece sin esperar el catálogo grande. Una descarga incompleta muestra un error con recuperación; no se exportan planes incompletos ni se inventa un plan para un solo partner.
+- Python genera JSON y gzip con SHA-256; se verifica la descarga comprimida y su contenido. Navegadores sin descompresión nativa reciben el JSON verificado.
+- El catálogo y el índice actuales pasan de 24.9 MB a 5.8 MB de carga útil, 76.8% menos en navegadores compatibles. Son bytes de datos; el tiempo real depende de la conexión y el equipo.
+- Cada compilación genera una identificación de contenido para los recursos y la caché. No es necesario editar números de versión al agregar una semana.
+- El plan queda disponible en la caché tras completar la instalación. Los motores guardados se recuperan al abrir sin red. La primera visita a GitHub Pages necesita conexión; borrar datos del navegador elimina los respaldos locales.
+- Filtros, Plan y Rutinas tienen accesos directos; se mantienen Café/DT, búsqueda por CeCo, equipo por tienda y PDF.
+- Scripts locales, sin ejecución inline ni `eval`. La publicación excluye CSV crudos, scripts de construcción y motor JS de 23.9 MB. El servidor local sólo sirve archivos públicos del sitio y escucha en este equipo.
 
 ## Revisión reproducible
 
-Python 3.12 y Node 22. No requiere instalar paquetes para validar:
+Sin paquetes adicionales para los controles de Python/Node:
 
 ```bash
 python scripts/validate_update.py --site _site
+python iniciar.py --site _site
 ```
 
-Usa una carpeta de salida nueva. Los siete controles generan el catálogo, reconstruyen los motores desde CSV, comprueban el directorio, ejecutan las pruebas Python/Node y auditan porcentajes y fidelidad al original. Sólo después preparan `_site` para publicar. Para abrir una copia local, sirve esa carpeta mediante HTTP.
+Usa una carpeta de salida nueva. Los siete controles de origen generan el catálogo y el índice, validan el directorio, ejecutan pruebas, concilian porcentajes y verifican fidelidad; una revisión adicional del sitio preparado comprueba enlaces, política de scripts y compresión. Se prueban las 459,256 búsquedas originales. El índice base tenía 26 semanas y los CSV actuales 31; siempre se reconstruye desde las fuentes antes de publicar.
 
-La equivalencia del catálogo se comprueba exhaustivamente. Las pruebas también cubren el control eliminado, recuperación del respaldo, actualización corrupta y reutilización del índice sin cambios. La validación visual de V26 se realizó en WebKit con emulación de iPhone y anchos de 320, 390, 980 y 1280 px; no sustituye una prueba en dispositivos físicos Android/iOS.
+El ZIP incluye un informe con resultados reales de las pruebas de navegador. Las comprobaciones automáticas no equivalen a una prueba física en cada teléfono. La seguridad de carga y publicación no añade autenticación: el repositorio y GitHub Pages conservan su visibilidad pública actual. No subas credenciales ni información privada al repositorio.

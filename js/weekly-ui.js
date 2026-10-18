@@ -8,7 +8,7 @@
  window.pbtWeekLabel=value=>value==='Weekend'?'Vie–Dom':'Lun–Jue';
  window.pbtDayLabel=value=>({Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'}[value]||value||'');
  window.pbtContextHTML=function(tab){
-  return '<div class="op-clock-card" id="'+tab+'_op_clock"><div class="context-top"><span class="op-label">Cálculo</span><button class="context-toggle" id="'+tab+'_mode" type="button" aria-pressed="false" onclick="setCalculationMode(\''+tab+'\')">Automático</button></div><div class="manual-context" id="'+tab+'_manual_context"><label for="'+tab+'_manual_weekpart">Días de la semana<select id="'+tab+'_manual_weekpart" onchange="setManualContext(\''+tab+'\')"><option value="Weekday">Lun–Jue</option><option value="Weekend">Vie–Dom</option></select></label><label for="'+tab+'_manual_daypart">Turno<select id="'+tab+'_manual_daypart" onchange="setManualContext(\''+tab+'\')"><option value="Morning">Mañana</option><option value="Lunch">Intermedio</option><option value="Afternoon">Tarde</option></select></label></div></div>';
+  return '<div class="op-clock-card" id="'+tab+'_op_clock"><div class="context-top"><span class="op-label">Cálculo</span><button class="context-toggle" id="'+tab+'_mode" type="button" aria-pressed="false" data-click="mode" data-tab="'+tab+'">Automático</button></div><div class="manual-context" id="'+tab+'_manual_context"><label for="'+tab+'_manual_weekpart">Días de la semana<select id="'+tab+'_manual_weekpart" data-change="context" data-tab="'+tab+'"><option value="Weekday">Lun–Jue</option><option value="Weekend">Vie–Dom</option></select></label><label for="'+tab+'_manual_daypart">Turno<select id="'+tab+'_manual_daypart" data-change="context" data-tab="'+tab+'"><option value="Morning">Mañana</option><option value="Lunch">Intermedio</option><option value="Afternoon">Tarde</option></select></label></div></div>';
  };
  window.syncCalculationContext=function(tab,ctx){
   const current=state[tab],manual=current.mode==='manual',box=$(tab+'_op_clock');if(!box)return;
@@ -123,7 +123,7 @@
   if(typeof Worker==='undefined')throw Error('Este navegador no permite leer archivos locales. Usa Releer carpeta para cargar los motores publicados.');
   if(operation.signal.aborted)throw new DOMException('Lectura cancelada','AbortError');
   let pack=await new Promise((resolve,reject)=>{
-   const worker=new Worker('js/weekly-worker.js?v=26');let finished=false;
+   const worker=new Worker('js/weekly-worker.js?v=27');let finished=false;
    function finish(error,value){if(finished)return;finished=true;operation.signal.removeEventListener('abort',aborted);worker.terminate();error?reject(error):resolve(value);}
    function aborted(){finish(new DOMException('Lectura cancelada','AbortError'));}operation.signal.addEventListener('abort',aborted,{once:true});
    worker.onmessage=event=>{if(event.data.progress)status('Leyendo '+event.data.progress);else if(event.data.error)finish(Error(event.data.error));else if(event.data.pack)finish(null,event.data.pack);};

@@ -44,17 +44,29 @@
     window.showTab.__accessible=true;
   }
 
+  window.refreshPBTNavigation=function(){
+    var source=window.PBT_WEEKLY||{},plan=window.PBT_PLAN||{},selected=window.state&&state[activeTab].filters.tienda.length===1;
+    var nav=document.getElementById('sectionNav'),status=document.getElementById('loadStatus');
+    if(nav)nav.hidden=!selected;
+    if(status){
+      var loading=!source.ready||!plan.ready,error=source.error||plan.error;
+      status.dataset.state=error?'error':loading?'loading':'ready';
+      status.textContent=error?'La carga necesita atención. Reintenta para recuperar tu plan.':!source.ready?'Cargando y verificando los datos de las tiendas…':!plan.ready?'Los datos están listos. Preparando el catálogo de planes…':selected?'Plan listo · tus filtros se guardan en este dispositivo.':'Elige Café o DT y busca una tienda por nombre o CeCo para empezar.';
+      if(source.ready&&plan.ready&&selected){var button=document.getElementById(activeTab+'_export');if(button&&button.disabled&&!window.PBT_EXPORT_BUSY)status.textContent='Revisa los filtros: todavía no hay un plan disponible para exportar.';}
+    }
+    if(window.state)for(var tab of ['cafe','dt']){var context=document.getElementById(tab+'_context'),current=state[tab];if(context)context.textContent=current.filters.tienda.length?pbtStoreLabel(current.filters.tienda[0])+' · '+(current.filters.mes.join(', ')||'Todos los meses disponibles')+' · '+pbtWeekLabel(current.filters.weekpart[0])+' · '+pbtDayLabel(current.filters.daypart[0])+' · '+current.partners+' partners':'';}
+  };
   function markReady(){
-    var chip=document.getElementById('readyChip');
-    var loader=document.getElementById('appLoading');
-    var source=window.PBT_WEEKLY||{},ready=source.ready===true;
-    if(chip){chip.textContent=ready?'Motor CSV listo':(source.error?'Revisar motor':'Cargando motor…');chip.classList.toggle('ready',ready)}
-    if(loader&&(ready||source.error)){loader.classList.add('hidden');setTimeout(function(){loader.remove()},260)}
+    var chip=document.getElementById('readyChip'),loader=document.getElementById('appLoading');
+    var source=window.PBT_WEEKLY||{},plan=window.PBT_PLAN||{},ready=source.ready===true&&plan.ready===true;
+    if(chip){chip.textContent=ready?'PBT listo':(source.error||plan.error?'Revisar carga':'Preparando PBT…');chip.classList.toggle('ready',ready)}
+    if(loader)loader.hidden=true;
     document.documentElement.setAttribute('data-app-ready',String(ready));
+    refreshPBTNavigation();
   }
 
   improveTabs();
-  fetch('data/project.json?v=24',{cache:'no-cache'}).then(function(response){
+  fetch('data/project.json?v=27',{cache:'no-cache'}).then(function(response){
     if(!response.ok)throw new Error('project.json '+response.status);
     return response.json();
   }).then(applyProject).catch(function(){applyProject(FALLBACK_PROJECT)});
@@ -64,6 +76,7 @@
     requestAnimationFrame(function(){requestAnimationFrame(markReady)});
   });
   document.addEventListener('pbt:source',markReady);
+  document.addEventListener('pbt:plan',markReady);
   document.addEventListener('keydown',function(event){
     if(!event.target.closest||!event.target.closest('.tabs [role="tab"]')||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
     event.preventDefault();var next=event.key==='Home'?'cafe':event.key==='End'?'dt':(activeTab==='cafe'?'dt':'cafe');

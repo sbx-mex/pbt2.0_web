@@ -7,6 +7,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+try:
+    from .build_runtime import prepare
+    from .audit_runtime import audit as audit_runtime
+except ImportError:
+    from build_runtime import prepare
+    from audit_runtime import audit as audit_runtime
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -21,10 +27,12 @@ def stage_site(destination):
     with tempfile.TemporaryDirectory(prefix='pbt-validado-',dir=destination.parent) as temporary:
         stage=Path(temporary)/'site';stage.mkdir()
         for name in ['index.html','manifest.json','sw.js']:shutil.copy2(ROOT/name,stage/name)
-        for name in ['css','icons','js']:shutil.copytree(ROOT/name,stage/name,ignore=shutil.ignore_patterns('data.js','excel_data.js','.*'))
+        for name in ['css','icons','js']:shutil.copytree(ROOT/name,stage/name,ignore=shutil.ignore_patterns('data.js','excel_data.js','plan-catalog.js','.*'))
         (stage/'data/motores').mkdir(parents=True)
         shutil.copy2(ROOT/'data/project.json',stage/'data/project.json')
         for name in ['indice.json','manifest.json']:shutil.copy2(ROOT/'data/motores'/name,stage/'data/motores'/name)
+        prepare(ROOT,stage)
+        audit_runtime(stage)
         (stage/'.nojekyll').touch()
         stage.rename(destination)
 

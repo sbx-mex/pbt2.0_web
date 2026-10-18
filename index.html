@@ -14,40 +14,32 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="PBT Web 2.0">
 <meta name="description" content="Herramienta interna para consultar el play PBT.24 según Product Mix, canales y contexto operativo.">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
-<script src="js/plan-catalog.js?v=26" defer></script>
-<script src="js/store-directory.js?v=24" defer></script>
-<script src="js/weekly-core.js?v=26" defer></script>
-<script src="js/motor-loader.js?v=26" defer></script>
-<script src="js/device-store.js?v=24" defer></script>
-<script src="js/device-ui.js?v=25" defer></script>
-<script src="js/weekly-ui.js?v=26" defer></script>
-<script src="js/print.js?v=24" defer></script>
-<script src="js/app.js?v=24" defer></script>
-<style>
-:root{--green:#00754a;--green2:#006241;--line:#b9b9b9;--text:#1f1f1f;--ok:#dff3e7;--bad:#ffe1e1;--gray:#aaa;--cbs:#cfe0f6;--pick:#ffc000;--hand:#d8ccff;--espresso:#9a856d;--pos:#c6e0b4;--food:#ffe699;--horno:#f4b183;--brew:#6f5445}
-*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f5f5;color:var(--text)}.header{background:var(--green);color:white;padding:14px 18px;font-size:22px;font-weight:900;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.logo{font-size:24px}.badge{background:white;color:var(--green);padding:7px 12px;border-radius:999px;font-size:13px;font-weight:900}.container{max-width:1500px;margin:auto;padding:12px}.tabs{display:flex;gap:10px;margin-bottom:12px;position:sticky;top:0;z-index:50;background:#f5f5f5;padding:8px 0}.tab{flex:1;border:none;background:#ddd;color:#111;padding:14px;border-radius:14px;font-weight:900;font-size:15px;cursor:pointer}.tab.active{background:var(--green);color:white}.page{display:none}.page.active{display:block}.card,.box{background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden}.card{border-radius:12px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05);overflow:visible}.card-title,.box-title{background:var(--green);color:white;text-align:center;padding:8px;font-weight:900}.card-body{padding:12px}.manual-top{display:grid;grid-template-columns:1fr 1.45fr 2fr;gap:12px;align-items:start;margin-bottom:12px}.box-body{padding:8px}.metric-grid{display:grid;gap:6px}.channels-cafe{grid-template-columns:repeat(2,1fr)}.channels-dt{grid-template-columns:repeat(3,1fr)}.mix-grid{grid-template-columns:repeat(5,1fr)}.metric{border:1px solid #c9c9c9;background:#f6f6f6;padding:6px;text-align:center}.metric label{display:block;font-size:12px;font-weight:900;margin-bottom:4px}.metric span{display:block;width:100%;border:none;background:#e6e6e6;text-align:center;font-size:16px;font-weight:900;padding:5px;color:var(--green)}.total{margin-top:6px;padding:6px;text-align:center;border-radius:8px;font-weight:900}.ok{background:var(--ok);color:var(--green)}.bad{background:var(--bad);color:#a40000}.section-title{background:var(--green);color:white;padding:10px;border-radius:10px 10px 0 0;font-weight:900;margin-top:12px}.layout-wrap{background:white;border:2px solid #222;border-radius:0 0 10px 10px;overflow:hidden}.layout{height:430px;position:relative;background:#fff}.area{position:absolute;border:1px solid #111;display:flex;justify-content:center;align-items:center;text-align:center;font-size:12px;font-weight:900}.gray{background:var(--gray)}.cbs{background:var(--cbs)}.pick{background:var(--pick)}.hand{background:var(--hand)}.espresso{background:var(--espresso)}.pos{background:var(--pos)}.food{background:var(--food)}.horno{background:var(--horno)}.brew{background:var(--brew);color:white}.partner{background:var(--green);color:white}.support{background:white;color:var(--green);border:1px solid var(--green)}.empty-zone{background:#eee;border:1px solid #111}details{background:white;border:1px solid var(--line);border-radius:10px;margin-top:4px;overflow:hidden}summary{background:var(--green);color:white;padding:10px;font-weight:900;cursor:pointer}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:700px}th{background:#006241;color:white;padding:7px;font-size:12px}td{border:1px solid #777;padding:7px;font-size:12px}.status{margin-top:6px;font-size:12px;font-weight:900;color:#555}.filters{display:grid;gap:10px}.filters.operativo{grid-template-columns:1fr 1fr 1.25fr!important;align-items:end}#dt .filters.operativo{grid-template-columns:1fr 1fr 1fr 1.25fr!important;align-items:end}.filter label{display:block;font-weight:900;font-size:12px;margin-bottom:5px;min-height:32px}.filter-hint{display:block;margin-top:3px;font-size:10px;line-height:1.2;color:#006241;font-weight:700;opacity:.72}.partner-select{width:100%;padding:9px;border-radius:10px;border:1px solid #bbb;font-weight:900;background:#fff}.ms{position:relative}.ms-btn{width:100%;border:1px solid #bbb;background:white;border-radius:10px;padding:9px;min-height:40px;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer;font-size:12px}.ms-panel{display:none;position:absolute;top:44px;left:0;right:0;background:white;border:1px solid #ccc;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:100;padding:8px;max-height:260px;overflow:auto}.ms.open .ms-panel{display:block}.ms-search{width:100%;padding:8px;border:1px solid #ccc;border-radius:8px;margin-bottom:6px}.ms-actions{display:flex;gap:6px;margin-bottom:6px}.ms-actions button{flex:1;border:none;border-radius:8px;padding:7px;background:#eee;font-weight:700;cursor:pointer}.ms-option{display:flex!important;align-items:center;gap:9px;padding:8px 9px;font-size:12px;border-radius:8px;margin:2px 0}.ms-option:hover{background:#eef7f2}.ms-option input{width:17px;height:17px;flex:0 0 auto}.ms-option-text{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:0}.ms-main{font-weight:900;color:#1f1f1f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ms-meta{font-size:11px;font-weight:800;color:#006241;background:#e7f4ee;border:1px solid #cfe8dc;border-radius:999px;padding:2px 7px;white-space:nowrap}.store-search{margin-top:10px}.store-search label{display:block;font-weight:900;font-size:12px;margin-bottom:6px}.store-search-wrap{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}.store-search-input{width:100%;border:1px solid #bbb;background:white;border-radius:10px;padding:11px 12px;font-size:13px;font-weight:800}.store-search-clear{border:none;background:#e9e9e9;color:#222;border-radius:10px;padding:11px 14px;font-size:12px;font-weight:900;cursor:pointer}.store-selected{margin-top:6px;font-size:12px;font-weight:900;color:#006241;min-height:18px}.store-results{margin-top:6px;background:white;border:1px solid #d3d3d3;border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.12);max-height:240px;overflow:auto;display:none}.store-results.open{display:block}.store-option{width:100%;border:none;background:white;text-align:left;padding:10px 12px;font-size:13px;font-weight:800;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;gap:10px;align-items:center}.store-option:hover,.store-option.active{background:#eef7f2;color:#006241}.store-option small{font-size:10px;color:#006241;font-weight:900;opacity:.8;white-space:nowrap}.store-empty{padding:10px 12px;font-size:12px;color:#666;font-weight:800}.quick-nav{position:fixed;right:14px;bottom:14px;z-index:9999;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.94);border:1px solid #cfe8dc;border-radius:999px;box-shadow:0 8px 22px rgba(0,0,0,.18);padding:7px}.quick-nav button{border:none;background:#00754a;color:#fff;border-radius:999px;padding:9px 12px;font-size:12px;font-weight:900;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.12)}.quick-nav button.secondary{background:#e7f4ee;color:#006241;border:1px solid #cfe8dc}.op-clock-card{background:#eef7f2;border:1px solid #cfe8dc;border-radius:12px;padding:8px 10px;min-height:54px;display:flex;flex-direction:column;justify-content:center}.op-label{font-size:11px;font-weight:900;color:#006241;opacity:.85}.op-time{font-size:16px;font-weight:900;color:#00754a;line-height:1.15}.op-context{font-size:12px;font-weight:900;color:#1f1f1f;margin-top:2px}.op-rule{font-size:10px;font-weight:700;color:#006241;opacity:.72;margin-top:2px}.partner-name-cell{display:flex;align-items:center;gap:6px;min-width:150px}.partner-letter{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:999px;background:#eef7f2;color:#006241;font-weight:900}.partner-name-select{width:118px;max-width:118px;border:1px solid #bbb;border-radius:8px;padding:6px 7px;font-size:12px;font-weight:900;text-align:center;background:#fff;color:#1f1f1f;text-transform:uppercase}.partner-marker{flex-direction:column;gap:1px;line-height:1;padding:1px 2px;overflow:visible;z-index:25}.marker-letter{display:block;font-weight:900;font-size:clamp(10px,1.45vw,18px);line-height:.95}.marker-name{display:block;max-width:90px;font-weight:900;font-size:clamp(7px,.85vw,11px);line-height:1;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.marker-name:empty{display:none}.team-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.team-search{width:100%;border:1px solid #bbb;border-radius:10px;padding:10px 12px;margin:10px 0;font-weight:800}.team-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:8px}.team-row{display:flex;align-items:center;gap:8px;border:1px solid #d9d9d9;background:#f8fbf9;border-radius:10px;padding:9px}.team-num{min-width:26px;height:26px;border-radius:999px;background:#eef7f2;color:#006241;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:11px}.team-input{width:100%;border:1px solid #bbb;border-radius:8px;padding:10px 10px;font-size:15px;font-weight:900;text-transform:uppercase;background:#fff}.team-help{font-size:12px;font-weight:800;color:#006241;margin:6px 0 10px 0}.partner-photo-bubble{position:absolute;left:50%;top:-48px;transform:translateX(-50%);width:64px;height:64px;border-radius:50%;background:#e7f4ee;border:3px solid #00754a;box-shadow:0 2px 8px rgba(0,0,0,.25),0 0 0 3px #e7f4ee;background-size:cover;background-position:center;z-index:40;pointer-events:none}.partner-photo-bubble.empty{display:none}.team-row{position:relative}.team-photo-btn{border:1px solid #00754a;background:#e7f4ee;color:#006241;border-radius:8px;padding:7px 8px;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}.team-photo-preview{width:34px;height:34px;border-radius:50%;border:2px solid #00754a;background:#fff;background-size:cover;background-position:center;flex:0 0 auto}.team-photo-preview.empty{border-color:#cfe8dc;background:#eef7f2}.team-file{display:none}.cell-tag,.excel-note,.filter-chip{display:none!important}
-
-/* V14 Fidelity: markers from PBT.24 keep exact coordinates; Fixed=green, No fijo=white */
-.partner-marker.partner{background:#00754a!important;color:#fff!important;border:1px solid #006241!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);}
-.partner-marker.support{background:#fff!important;color:#00754a!important;border:1px dashed #00754a!important;box-shadow:inset 0 0 0 1px rgba(0,117,74,.08);}
-.partner-marker.unknown-marker{background:#f2f4f3!important;color:#52605a!important;border:1px dotted #6d7873!important;}
-.partner-marker .marker-letter{font-weight:900;}
-.partner-marker .marker-name{font-weight:900;}
-.marker-legend{display:none!important}.routine-fixed-column{display:none!important}.app-footer{display:flex;justify-content:center;padding:18px 12px 82px;color:#5d6963;font-size:11px}
-@media(max-width:760px){.header{font-size:18px;padding:12px}.logo{font-size:20px}.tabs{overflow-x:auto}.tab{min-width:150px;padding:12px}.filters.operativo,#dt .filters.operativo{grid-template-columns:1fr 1fr!important}.op-clock-card{grid-column:1/-1}.manual-top{grid-template-columns:1fr}.mix-grid{grid-template-columns:repeat(2,1fr)}.channels-cafe,.channels-dt{grid-template-columns:repeat(2,1fr)}.layout{height:300px}.area{font-size:8px}.partner,.support{font-size:14px}.partner-marker{padding:1px;gap:0}.marker-letter{font-size:11px}.marker-name{font-size:7px;max-width:44px}.partner-photo-bubble{width:56px;height:56px;top:-42px;border-width:2px;box-shadow:0 2px 6px rgba(0,0,0,.22),0 0 0 2px #e7f4ee}.partner-name-cell{min-width:130px}.partner-name-select{width:96px;max-width:96px;font-size:11px;padding:6px 4px}.team-grid{grid-template-columns:1fr}.team-list{grid-template-columns:1fr}.quick-nav{left:10px;right:10px;bottom:10px;justify-content:space-between;border-radius:18px}.quick-nav button{flex:1;padding:10px 8px;font-size:10px}.container{padding-bottom:72px}}
-.team-photo-preview{width:38px;height:38px;cursor:pointer;padding:0}
-.team-photo-preview.empty::after{content:"📷";font-size:16px}
-.team-photo-actions{display:flex;gap:5px;flex-wrap:wrap}
-details table th:nth-child(3),details table td:nth-child(3){display:none}
-</style>
-<link rel="stylesheet" href="css/styles.css?v=25">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<script src="js/boot.js?v=27"></script>
+<script src="js/asset-loader.js?v=27" defer></script>
+<script src="js/plan-loader.js?v=27" defer></script>
+<script src="js/sheet-template.js?v=27" defer></script>
+<script src="js/store-directory.js?v=27" defer></script>
+<script src="js/weekly-core.js?v=27" defer></script>
+<script src="js/motor-loader.js?v=27" defer></script>
+<script src="js/ui.js?v=27" defer></script>
+<script src="js/events.js?v=27" defer></script>
+<script src="js/device-store.js?v=27" defer></script>
+<script src="js/device-ui.js?v=27" defer></script>
+<script src="js/weekly-ui.js?v=27" defer></script>
+<script src="js/print.js?v=27" defer></script>
+<script src="js/app.js?v=27" defer></script>
+<script src="js/sw-client.js?v=27" defer></script>
+<link rel="stylesheet" href="css/base.css?v=27">
+<link rel="stylesheet" href="css/styles.css?v=27">
 </head>
 <body>
-<header class="header"><div class="brand-lockup"><div class="logo">PBT</div></div><button class="about-button" id="aboutButton" type="button" aria-haspopup="dialog" aria-controls="aboutDialog" aria-expanded="false" onclick="openAbout()">Acerca de</button></header>
+<a class="skip-link" href="#mainContent">Ir al contenido</a>
+<noscript><p class="boot-error">Activa JavaScript para consultar el plan PBT.</p></noscript>
+<header class="header"><div class="brand-lockup"><div class="logo">PBT</div></div><button class="about-button" id="aboutButton" type="button" aria-haspopup="dialog" aria-controls="aboutDialog" aria-expanded="false" data-click="about">Acerca de</button></header>
 <div id="appLoading" class="app-loading" role="status" aria-live="polite"><span class="loading-mark" aria-hidden="true">PBT</span><strong>Preparando…</strong></div>
-<main class="container"><div class="main-navigation"><nav class="tabs" role="tablist" aria-label="Plan"><button class="tab active" id="tabCafe" role="tab" aria-selected="true" aria-controls="cafe" tabindex="0" onclick="showTab('cafe')">Café</button><button class="tab" id="tabDt" role="tab" aria-selected="false" aria-controls="dt" tabindex="-1" onclick="showTab('dt')">DT</button></nav><button id="teamButton" class="team-button" type="button" aria-expanded="false" aria-controls="equipo" onclick="toggleEquipo()">Equipo</button></div><section id="equipo" class="main-team" aria-label="Equipo" hidden></section><div id="motorUnavailable" class="motor-unavailable" hidden><span>Motor no disponible</span><button id="retryMotor" type="button">Reintentar</button></div><section id="cafe" class="page active" role="tabpanel" aria-labelledby="tabCafe"></section><section id="dt" class="page" role="tabpanel" aria-labelledby="tabDt"></section></main>
-<dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutTitle"><div class="about-toolbar"><h2 id="aboutTitle">Acerca de</h2><button type="button" class="about-close" aria-label="Cerrar Acerca de" onclick="closeAbout()">×</button></div><div class="about-content">
+<main id="mainContent" class="container" tabindex="-1"><section id="bootError" class="boot-error" role="alert" hidden><strong>No se pudo completar la carga.</strong><p id="bootMessage"></p><button type="button" id="retryApp">Volver a cargar</button></section><section id="updateNotice" class="update-notice" hidden><span>Hay una versión nueva disponible.</span><button type="button" id="applyUpdate">Actualizar</button></section><div class="main-navigation"><nav class="tabs" role="tablist" aria-label="Plan"><button class="tab active" id="tabCafe" role="tab" aria-selected="true" aria-controls="cafe" tabindex="0" data-click="tab" data-tab="cafe">Café</button><button class="tab" id="tabDt" role="tab" aria-selected="false" aria-controls="dt" tabindex="-1" data-click="tab" data-tab="dt">DT</button></nav><button id="teamButton" class="team-button" type="button" aria-expanded="false" aria-controls="equipo" data-click="team">Equipo</button></div><section id="equipo" class="main-team" aria-label="Equipo" hidden></section><div id="loadStatus" class="load-status" role="status" aria-live="polite">Preparando los datos de tu tienda…</div><nav id="sectionNav" class="section-nav" aria-label="Secciones del plan" hidden><button type="button" data-click="navigate" data-section="controls">Filtros</button><button type="button" data-click="navigate" data-section="plan">Plan</button><button type="button" data-click="navigate" data-section="routines">Rutinas</button></nav><div id="motorUnavailable" class="motor-unavailable" hidden><span>No se pudieron cargar los datos. Revisa tu conexión y vuelve a intentar.</span><button id="retryMotor" type="button">Reintentar</button></div><section id="cafe" class="page active" role="tabpanel" aria-labelledby="tabCafe"></section><section id="dt" class="page" role="tabpanel" aria-labelledby="tabDt"></section></main>
+<dialog id="aboutDialog" class="about-dialog" aria-labelledby="aboutTitle"><div class="about-toolbar"><h2 id="aboutTitle">Acerca de</h2><button type="button" class="about-close" aria-label="Cerrar Acerca de" data-click="close-about">×</button></div><div class="about-content">
 <section class="about-intro"><h3>Motores CSV</h3><span class="ready-chip" id="readyChip">Preparando motor…</span><p id="directorySummary"></p><p>Los porcentajes usan las unidades de los CSV para la tienda y el filtro elegidos. Los meses siguen el calendario 4-4-5 del PBT. AA se consulta por separado.</p><details class="usage-note"><summary>Cómo usar</summary><p>Elige tienda, meses, días y turno. Automático sigue el reloj del dispositivo: Mañana 06–12 h, Intermedio 12–17 h y Tarde 17–06 h. Equipo permite agregar nombres y fotos, guardados en este dispositivo.</p></details></section>
   <details class="motor-panel" id="motorPanel">
     <summary><span><strong id="motorOrigin">Motores semanales</strong><small id="motorSummary">CSV por semana · filtro de mes</small></span><span aria-hidden="true">↓</span></summary>
@@ -62,187 +54,8 @@ details table th:nth-child(3),details table td:nth-child(3){display:none}
 <section><h3>Guardado en este dispositivo</h3><p>La tienda, filtros, equipo y fotos se guardan por CeCo en este navegador. Las fotos no se envían a un servidor. En Equipo puedes recuperar los nombres y fotos de la versión anterior y vincularlos a la tienda elegida. Borrar los datos del sitio elimina este respaldo; la navegación privada y otro navegador usan un almacenamiento distinto.</p></section><section class="about-audit"><h3>Validación de la tienda</h3><p id="aboutContext">Elige una tienda en Café o DT para consultar sus unidades.</p><div id="cafe_audit_section" hidden><div class="audit-totals"><span id="cafe_channelTotal"></span><span id="cafe_mixTotal"></span></div><div class="audit-body" id="cafe_audit"></div></div><div id="dt_audit_section" hidden><div class="audit-totals"><span id="dt_channelTotal"></span><span id="dt_mixTotal"></span></div><div class="audit-body" id="dt_audit"></div></div></section><section><h3>Exportación</h3><p>Carta con márgenes de 12.7 mm. Período, comentarios, porcentajes, plano y rutinas conservan el acomodo del PBT. El nombre del PDF usa CeCo, días, turno y partners.</p></section><footer class="app-footer" id="appFooter">
   <div class="footer-inner"><strong data-footer-title>Diseñado por Enrique César Flores & Jorge Antonio Alcantar Aguiar</strong><p data-footer-message>PBT Web 2.0 es una herramienta interna desarrollada para apoyar la planeación operativa, la toma de decisiones y la mejora continua. Su contenido es de uso exclusivo de los equipos autorizados y no debe reproducirse, distribuirse ni difundirse fuera del ámbito de trabajo.</p><div class="footer-tags"><span>#GreenApronService</span><span data-campaign-full>JUNTÉMONOS MÁS</span></div></div>
 </footer></div></dialog>
-<script src="js/sheet-template.js?v=24"></script>
-<script>
-var MAPS={cafe:null,dt:null},NEAREST={cafe:new Map(),dt:new Map()},activeTab='cafe';
-var state={cafe:{mode:'auto',filters:{q:[],daypart:[],mes:[],semana:[],weekpart:[],tienda:[]},partners:4},dt:{mode:'auto',filters:{q:[],daypart:[],mes:[],semana:[],weekpart:[],tienda:[]},partners:11,partnerTablet:'No'}};
-var config={cafe:{title:'CAFE',maxPartners:11,tipoEngine:'CAFE',channelLabels:[['Lobby','G14','lobby'],['Pick up & Delivery','H14','mop']]},dt:{title:'DRIVE THRU',maxPartners:13,tipoEngine:'DT',channelLabels:[['Lobby','G14','lobby'],['Pick up & Delivery','H14','mop'],['DT','I14','dt']]}};
-var mixLabels=[['Espresso','K14','esp'],['COD','L14','brew'],['CBS','K15','cbs'],['Food','L15','food'],['Otro','K16','other']];
-function round0(v){v=Number(v||0);return Number.isFinite?Number.isFinite(v)?Math.round(v):0:isFinite(v)?Math.round(v):0}function pctText(n){return n==null||!Number.isFinite(Number(n))?'—':Math.round(Number(n))+'%'}function escHtml(v){return String(v||'').replace(/[&<>\"]/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]})}
-function cleanPartnerName(v){
-  return String(v||'')
-    .replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 ._-]/g,'')
-    .slice(0,8)
-    .toUpperCase();
-}
-function getSourceList(name){
- if(!window.PBT_WEEKLY||!PBT_WEEKLY.active||!PBT_WEEKLY.engine)return [];
- if(name==='Mes')return PBT_WEEKLY.engine.months;
- if(name==='TiendaCafe')return (PBT_WEEKLY.engine.availableStores||PBT_WEEKLY.engine.stores)('CAFE');
- if(name==='TiendaDT')return (PBT_WEEKLY.engine.availableStores||PBT_WEEKLY.engine.stores)('DT');return [];
-}
-function buildPlayMap(tab){if(MAPS[tab])return MAPS[tab];var entries=(tab==='cafe'?EXCEL_DATA.cafePlayEntries:EXCEL_DATA.dtPlayEntries)||[],m={};for(var i=0;i<entries.length;i++)m[entries[i][0]]=entries[i][1];MAPS[tab]=m;return m}
-function dist(a,b){var s=0;for(var i=0;i<8;i++){var d=(a[i]||0)-(b[i]||0);s+=d*d}return s}function nearestMix(tab,vals){var key=vals.join(','),cache=NEAREST[tab];if(cache.has(key))return cache.get(key);var arr=(tab==='cafe'?EXCEL_DATA.cafeCandidates:EXCEL_DATA.dtCandidates)||[],best=arr[0]||[0,0,0,0,0,0,0,0],bd=Infinity;for(var i=0;i<arr.length;i++){var d=dist(arr[i],vals);if(d<bd){bd=d;best=arr[i];if(d===0)break}}cache.set(key,best);if(cache.size>120)cache.delete(cache.keys().next().value);return best}
-function getPlay(tab,partners,channels,mix){var vals=tab==='cafe'?[channels.lobby,channels.mop,0,mix.esp,mix.brew,mix.cbs,mix.food,mix.other]:[channels.lobby,channels.mop,channels.dt,mix.esp,mix.brew,mix.cbs,mix.food,mix.other];var nearest=nearestMix(tab,vals.map?vals.map(round0):vals);var key=[round0(partners)].concat(nearest).join(',');var play=EXCEL_DATA.lookupPlay?EXCEL_DATA.lookupPlay(tab,round0(partners),nearest):buildPlayMap(tab)[key];return{play:play,nearest:nearest,key:key}}
-function cellPos(row,col,rowspan,colspan){row=Number(row);col=Number(col);rowspan=Number(rowspan||1);colspan=Number(colspan||1);var startRow=18,rows=10,startCol=2,widths=[9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,10.83203125],total=0,leftWidth=0,blockWidth=0;for(var i=0;i<widths.length;i++){total+=widths[i];if(i<col-startCol)leftWidth+=widths[i];if(i>=col-startCol&&i<col-startCol+colspan)blockWidth+=widths[i]}return{left:leftWidth/total*100,top:(row-startRow)/rows*100,width:blockWidth/total*100,height:rowspan/rows*100}}
-function block(cls,row,col,rowspan,colspan,text){var p=cellPos(row,col,rowspan,colspan);return '<div class="area '+cls+'" style="left:'+p.left+'%;top:'+p.top+'%;width:'+p.width+'%;height:'+p.height+'%">'+text+'</div>'}
-function staticLayout(tab){
- var sheet=PBT_SHEET[tab],html='';
- function area(row,col,rs,cs,style,text,cls){var p=cellPos(row,col,rs,cs);return '<div class="area sheet-area '+(cls||'')+'" style="left:'+p.left+'%;top:'+p.top+'%;width:'+p.width+'%;height:'+p.height+'%;'+style+'">'+escHtml(text||'')+'</div>';}
- sheet.cells.forEach(function(c){var style='background:'+c[2]+';border:0;';[['l','left'],['t','top'],['r','right'],['b','bottom']].forEach(function(side){if(c[3].includes(side[0]))style+='border-'+side[1]+':1px solid #333;';});html+=area(c[0],c[1],1,1,style);});
- sheet.labels.forEach(function(c){html+=area(c[0],c[1],c[2],c[3],'border:0;color:'+c[5]+';',c[4],'sheet-label');});return html;
-}
-function fallbackCoords(tab){return tab==='cafe'?[['',23,9,'A'],['',22,5,'B'],['',21,8,'C.'],['',24,8,'D.']]:[['',19,5,'A'],['',20,5,'B'],['',26,10,'C'],['',26,6,'D'],['',26,8,'E'],['',25,7,'F.'],['',23,4,'G'],['',22,4,'H'],['',23,4,'I.'],['',25,4,'J'],['',27,9,'K.']]}
-function pbtIsFixedValue(v){var t=String(v||'').trim().toLowerCase();return t==='sí'||t==='si'||t==='yes'||t==='true'||t==='1';}
-function pbtCleanLetter(v){return String(v||'').replace('.','').trim().toUpperCase();}
-function pbtLayoutName(tab){return tab==='cafe'?'Cafe_S_2M2O2P_Left_1':'Dt_L_2M2O2P_Left_1';}
-function layoutMarkers(tab,play){
-  try{
-    var layoutName=pbtLayoutName(tab), rows=(EXCEL_DATA.routines&&EXCEL_DATA.routines[play])||[];
-    var fixedByPartner={};
-    for(var i=0;i<rows.length;i++){
-      var rr=rows[i], lk=pbtCleanLetter(rr[0]);
-      if(lk) fixedByPartner[lk]=pbtIsFixedValue(rr[2]);
-    }
-    var raw=(EXCEL_DATA.coords&&EXCEL_DATA.coords[play])||[], cs=[];
-    for(var j=0;j<raw.length;j++){
-      var x=raw[j], xLayout=String(x[0]||'').replace(/^_/,'');
-      if(xLayout===layoutName){
-        cs.push({row:Number(x[1])+17,col:Number(x[2])+1,letter:String(x[3]||'')});
-      }
-    }
-    var usingFallback=false;
-    if(!cs.length){
-      var fb=fallbackCoords(tab); usingFallback=true;
-      for(var f=0;f<fb.length;f++)cs.push({row:Number(fb[f][1]),col:Number(fb[f][2]),letter:String(fb[f][3]||'')});
-    }
-    var tabletOn=tab==='dt'&&state.dt&&state.dt.partnerTablet==='Sí', html='';
-    for(var a=0;a<cs.length;a++){
-      var item=cs[a], clean=pbtCleanLetter(item.letter), row=item.row, col=item.col;
-      if(tabletOn && clean==='B' && !usingFallback){row=18; col=10;}
-      var p=cellPos(row,col), fixed=!!fixedByPartner[clean];
-      var cls=fixed?'partner':'support', pname=getPartnerName(tab,clean);
-      html+='<div class="area '+cls+' partner-marker" data-fixed="'+(fixed?'Si':'No')+'" style="left:'+p.left+'%;top:'+p.top+'%;width:'+p.width+'%;height:'+p.height+'%">'+photoBubbleHTML(tab,pname)+'<span class="marker-letter">'+escHtml(item.letter)+'</span><span class="marker-name">'+escHtml(pname)+'</span></div>';
-    }
-    return html;
-  }catch(e){console.log('Fallback layoutMarkers iOS',e);return fallbackMarkers(tab,play)}
-}
-function fallbackMarkers(tab,play){
-  var cs=fallbackCoords(tab), rows=(EXCEL_DATA.routines&&EXCEL_DATA.routines[play])||[], fixedByPartner={}, html='';
-  for(var r=0;r<rows.length;r++){var key=pbtCleanLetter(rows[r][0]);if(key)fixedByPartner[key]=pbtIsFixedValue(rows[r][2])}
-  for(var i=0;i<cs.length;i++){
-    var p=cellPos(cs[i][1],cs[i][2]), letter=String(cs[i][3]||''), clean=pbtCleanLetter(letter);
-    var known=Object.prototype.hasOwnProperty.call(fixedByPartner,clean), fixed=known&&fixedByPartner[clean];
-    var cls=known?(fixed?'partner':'support'):'unknown-marker', pname=getPartnerName(tab,clean), status=known?(fixed?'Si':'No'):'Sin dato';
-    html+='<div class="area '+cls+' partner-marker" data-fixed="'+status+'" style="left:'+p.left+'%;top:'+p.top+'%;width:'+p.width+'%;height:'+p.height+'%">'+photoBubbleHTML(tab,pname)+'<span class="marker-letter">'+escHtml(letter)+'</span><span class="marker-name">'+escHtml(pname)+'</span></div>';
-  }
-  return html;
-}
-function renderLayout(tab,play){
- var el=document.getElementById(tab+'_layout');if(!el)return;
- el.innerHTML='<div class="sheet-grid" style="height:'+(1000/PBT_SHEET[tab].rows)+'%">'+staticLayout(tab)+(play?layoutMarkers(tab,play):fallbackMarkers(tab,play))+'</div>';
-}
-function partnerSelectHTML(tab,letter){var clean=String(letter||'').replace('.','').trim().toUpperCase(),selected=getAssignedPartner(tab,clean),names=getTeamList(tab),seen={},unique=[];for(var i=0;i<names.length;i++){var n=String(names[i]||'').trim().toUpperCase();if(n&&!seen[n]){seen[n]=true;unique.push(n)}}var html='<option value="">Nombre</option>';if(selected&&!seen[selected])html+='<option value="'+escHtml(selected)+'" selected>'+escHtml(selected)+'</option>';for(var j=0;j<unique.length;j++)html+='<option value="'+escHtml(unique[j])+'" '+(unique[j]===selected?'selected':'')+'>'+escHtml(unique[j])+'</option>';return '<select class="partner-name-select" onchange="setPartnerName(\''+tab+'\',\''+clean+'\',this)">'+html+'</select>'}
-function fallbackRoutines(tab){var n=state[tab].partners||4,letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),rows=[];var stCafe=['POS 1','Bar 1','Soporte','Soporte','Bar 2','CBS 1','CBS 2','Horno 1','Hand off 1'];var stDt=['DTR','DTO','POS 1','Bar 1','Bar 2','Soporte','CBS 1','CBS 2','Horno 1','Hand off 1','Soporte'];for(var i=0;i<n&&i<letters.length;i++){var st=(tab==='cafe'?stCafe[i]||'Soporte':stDt[i]||'Soporte');rows.push([letters[i],st,(st==='Soporte'?'No':'Sí'),'Función '+st])}return rows}
-function renderRoutines(tab,play){var rows=(EXCEL_DATA.routines&&EXCEL_DATA.routines[play])||fallbackRoutines(tab),tbody=document.getElementById(tab+'_tbody');if(!tbody)return;var tabletOn=tab==='dt'&&state.dt&&state.dt.partnerTablet==='Sí',html='';for(var i=0;i<rows.length;i++){var r=rows[i],letra=String(r[0]||''),clean=letra.replace('.','').trim().toUpperCase(),isDtoTablet=tabletOn&&clean==='B',estacion=isDtoTablet?r[1]+' + Carril':r[1],rutina=isDtoTablet?r[3]+' + Tablet':r[3];html+='<tr><td><div class="partner-name-cell"><span class="partner-letter">'+letra+'</span>'+partnerSelectHTML(tab,letra)+'</div></td><td>'+estacion+'</td><td>'+r[2]+'</td><td>'+rutina+'</td></tr>'}tbody.innerHTML=html}
-function setTotals(tab,channels,mix){
- var values=[channels.lobby,channels.mop].concat(tab==='dt'?[channels.dt]:[]),m=[mix.esp,mix.brew,mix.cbs,mix.food,mix.other];
- var sum=function(arr){return arr.some(function(n){return n==null})?null:arr.reduce(function(a,n){return a+Math.round(n*10)},0)/10};
- var chTotal=sum(values),mixTotal=sum(m),ch=document.getElementById(tab+'_channelTotal'),mt=document.getElementById(tab+'_mixTotal');
- if(ch){ch.textContent='Total: '+pctText(chTotal);ch.className=chTotal===100?'total ok':'total bad'}
- if(mt){mt.textContent='Total: '+pctText(mixTotal);mt.className=mixTotal===100?'total ok':'total bad'}
- return {chTotal:chTotal,mixTotal:mixTotal,valid:chTotal===100&&mixTotal===100};
-}
-function filterHTML(tab,key,label){var id=tab+'_'+key;return '<div class="filter"><label id="'+id+'_title">'+label+'</label><div class="ms" id="'+id+'_ms"><button class="ms-btn" id="'+id+'_button" type="button" aria-expanded="false" aria-controls="'+id+'_panel" aria-labelledby="'+id+'_title '+id+'_label" onclick="toggleMS(\''+tab+'\',\''+key+'\')"><span id="'+id+'_label">Todos</span><span aria-hidden="true">▾</span></button><div class="ms-panel" id="'+id+'_panel" role="group" aria-labelledby="'+id+'_title"><div class="ms-actions"><button type="button" onclick="selectAllMS(\''+tab+'\',\''+key+'\')">Todos los meses</button></div><div id="'+id+'_options"></div></div></div></div>'}
-function storeSearchHTML(tab,label){return '<div class="store-search"><label for="'+tab+'_tienda_search">'+label+'</label><div class="store-search-wrap"><input class="store-search-input" id="'+tab+'_tienda_search" placeholder="Cargando…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="'+tab+'_tienda_results" oninput="searchStore(\''+tab+'\',this.value)" onfocus="searchStore(\''+tab+'\',this.value)" onkeydown="storeKeydown(event,\''+tab+'\')"><button class="store-search-clear" type="button" aria-label="Cambiar tienda" title="Cambiar tienda" onclick="clearStore(\''+tab+'\')">×</button></div><div class="store-results" id="'+tab+'_tienda_results" role="listbox" aria-label="Tiendas"></div><span class="sr-only" id="'+tab+'_store_count" role="status"></span><div id="'+tab+'_store_error" class="store-error" role="alert"></div></div>'}
-function buildPage(tab){
- var c=config[tab],opts='';for(var i=1;i<=c.maxPartners;i++)opts+='<option value="'+i+'" '+(i===state[tab].partners?'selected':'')+'>'+i+'</option>';
- document.getElementById(tab).innerHTML='<div class="card filter-card"><div class="card-title">Filtro</div><div class="card-body">'+storeSearchHTML(tab,'Tienda')+'<div class="filters operativo" id="'+tab+'_controls" hidden>'+filterHTML(tab,'mes','Mes / meses')+'<div class="filter"><label for="'+tab+'_partners">Partners</label><select class="partner-select" id="'+tab+'_partners" onchange="setPartners(\''+tab+'\')">'+opts+'</select></div>'+(tab==='dt'?'<div class="filter"><label for="dt_partnerTablet_filter">Partner Tablet</label><select class="partner-select" id="dt_partnerTablet_filter" onchange="setPartnerTablet(\''+tab+'\',this.value)"><option value="No">No</option><option value="Sí">Sí</option></select></div>':'')+pbtContextHTML(tab)+'</div></div></div><div id="'+tab+'_results" hidden><div class="manual-top"><div class="box"><div class="box-title">Distribución de canal</div><div class="box-body"><div class="metric-grid '+(tab==='cafe'?'channels-cafe':'channels-dt')+'" id="'+tab+'_channels"></div></div></div><div class="box"><div class="box-title">Mix de producto</div><div class="box-body"><div class="metric-grid mix-grid" id="'+tab+'_mix"></div></div></div></div><div class="plan-toolbar"><h2>Plan de distribución</h2><div class="plan-actions"><button class="export-button" id="'+tab+'_export" type="button" onclick="exportPBTLetter()">Exportar PDF</button></div></div><div class="layout-wrap" id="'+tab+'_layout_wrap" tabindex="0" role="region" aria-label="Plano de distribución"><div class="layout" id="'+tab+'_layout"></div></div><details class="routines-panel" open><summary>Rutinas</summary><div class="table-wrap"><table><thead><tr><th>Partner</th><th>Estación</th><th>Fijo</th><th>Rutinas</th></tr></thead><tbody id="'+tab+'_tbody"></tbody></table></div></details></div>';
-}
-function fillMS(tab,key,values){var box=document.getElementById(tab+'_'+key+'_options');if(!box)return;var html='',chosen=state[tab].filters[key]||[];values=values||[];for(var i=0;i<values.length;i++){var safe=escHtml(values[i]);html+='<label class="ms-option"><input type="checkbox" value="'+safe+'" '+(!chosen.length||chosen.includes(values[i])?'checked':'')+' onchange="changeMS(\''+tab+'\',\''+key+'\')"><span class="ms-option-text"><span class="ms-main">'+safe+'</span></span></label>'}box.innerHTML=html;updateMSLabel(tab,key)}
-function populateFilters(){fillMS('cafe','mes',getSourceList('Mes'));fillMS('dt','mes',getSourceList('Mes'))}
-function closeMS(tab,key,focus){var id=tab+'_'+key,el=document.getElementById(id+'_ms'),button=document.getElementById(id+'_button');if(el)el.classList.remove('open');if(button){button.setAttribute('aria-expanded','false');if(focus&&button.focus)button.focus();}}
-function toggleMS(tab,key){var id=tab+'_'+key,el=document.getElementById(id+'_ms'),opening=el&&!el.classList.contains('open');['cafe','dt'].forEach(function(name){closeMS(name,'mes',false)});if(opening){el.classList.add('open');document.getElementById(id+'_button').setAttribute('aria-expanded','true');}}
 
-function changeMS(tab,key){var checked=document.querySelectorAll('#'+tab+'_'+key+'_options input:checked'),all=document.querySelectorAll('#'+tab+'_'+key+'_options input'),arr=[];for(var i=0;i<checked.length;i++)arr.push(checked[i].value);if(!arr.length){fillMS(tab,key,getSourceList('Mes'));return;}state[tab].filters[key]=arr.length===all.length?[]:arr;updateMSLabel(tab,key);renderDataTab(tab)}
-function selectAllMS(tab,key){state[tab].filters[key]=[];fillMS(tab,key,getSourceList('Mes'));renderDataTab(tab)}
-function clearMS(tab,key){selectAllMS(tab,key)}
-function updateMSLabel(tab,key){var el=document.getElementById(tab+'_'+key+'_label'),arr=state[tab].filters[key]||[];if(el)el.textContent=arr.length===0?'Todos':arr.length===1?arr[0]:arr.length+' meses'}
 
-function normalizeStoreText(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
-function getStoreList(tab){return tab==='cafe'?getSourceList('TiendaCafe'):getSourceList('TiendaDT')}
-function pbtStoreLabel(value){return window.PBT_DIRECTORY?PBT_DIRECTORY.label(value):String(value||'')}
-function closeStoreResults(tab){var box=document.getElementById(tab+'_tienda_results'),input=document.getElementById(tab+'_tienda_search');if(box)box.classList.remove('open');if(input){input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');}}
-function activeStoreOption(tab,index){var input=document.getElementById(tab+'_tienda_search'),items=document.getElementById(tab+'_tienda_results').querySelectorAll('.store-option');for(var i=0;i<items.length;i++){items[i].classList.toggle('active',i===index);items[i].setAttribute('aria-selected',String(i===index));}if(items[index]){input.setAttribute('aria-activedescendant',items[index].id);if(items[index].scrollIntoView)items[index].scrollIntoView({block:'nearest'});}else input.removeAttribute('aria-activedescendant');}
-function searchStore(tab,value){
- var box=document.getElementById(tab+'_tienda_results'),input=document.getElementById(tab+'_tienda_search');if(!box||input.disabled)return;
- var selected=state[tab].filters.tienda[0],q=normalizeStoreText(value).replace(/^ceco\s*(?=\d)/,''),list=getStoreList(tab);
- if(selected&&value===pbtStoreLabel(selected))q='';else if(selected){state[tab].filters.tienda=[];renderDataTab(tab);}
- var seen=new Set(),matches=[];
- list.forEach(function(name){if(seen.has(name))return;seen.add(name);var item=PBT_DIRECTORY.lookup(name),code=item.code,text=normalizeStoreText(item.name||name),score=99;if(!q)score=0;else if(code===q)score=0;else if(text===q)score=1;else if(code.indexOf(q)===0)score=2;else if(text.indexOf(q)===0)score=3;else if(q.split(/\s+/).every(function(word){return normalizeStoreText(pbtStoreLabel(name)+' '+name).includes(word)}))score=4;if(score<99)matches.push({name:name,score:score});});
- matches.sort(function(a,b){return a.score-b.score||pbtStoreLabel(a.name).localeCompare(pbtStoreLabel(b.name),'es');});matches=matches.slice(0,20);
- box.innerHTML=matches.length?matches.map(function(item,i){var name=item.name,dt=PBT_WEEKLY.engine.typeOf(name)==='DT';return '<button id="'+tab+'_store_option_'+i+'" type="button" tabindex="-1" role="option" aria-selected="false" class="store-option" onclick="selectStore(\''+tab+'\','+JSON.stringify(String(name)).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+')"><span>'+escHtml(pbtStoreLabel(name))+'</span><small>'+(dt?'DT':'Café')+'</small></button>'}).join(''):'<div class="store-empty">Sin coincidencias</div>';
- box.classList.add('open');input.setAttribute('aria-expanded','true');activeStoreOption(tab,0);document.getElementById(tab+'_store_count').textContent=matches.length+' resultados';
-}
-function storeKeydown(ev,tab){
- var box=document.getElementById(tab+'_tienda_results'),wasOpen=box.classList.contains('open');
- if(ev.key==='Enter'){if(wasOpen){ev.preventDefault();var selected=box.querySelector('.store-option.active');if(selected)selected.click();}return;}
- if(ev.key==='Escape'||ev.key==='Tab'){closeStoreResults(tab);return;}
- if(!['ArrowDown','ArrowUp','Home','End'].includes(ev.key))return;ev.preventDefault();if(!wasOpen)searchStore(tab,document.getElementById(tab+'_tienda_search').value);
- var items=box.querySelectorAll('.store-option');if(!items.length)return;var current=Array.prototype.findIndex.call(items,function(el){return el.classList.contains('active')}),next=!wasOpen?0:(current+(ev.key==='ArrowDown'?1:-1)+items.length)%items.length;if(ev.key==='Home')next=0;if(ev.key==='End'||(!wasOpen&&ev.key==='ArrowUp'))next=items.length-1;activeStoreOption(tab,next);
-}
 
-function selectStore(tab,name){
- if(!window.PBT_WEEKLY||!PBT_WEEKLY.active||!getStoreList(tab).includes(String(name)))return;
- if(window.saveStorePlan)saveStorePlan(tab);state[tab].filters.tienda=[String(name)];
- if(window.restoreStorePlan)restoreStorePlan(tab);
- document.getElementById(tab+'_tienda_search').value=pbtStoreLabel(name);closeStoreResults(tab);
- fillMS(tab,'mes',getSourceList('Mes'));applyOperationalContext(false);showTab(tab,true);
- if(window.savePBTContext)savePBTContext();
- var input=document.getElementById(tab+'_tienda_search');if(input.blur)input.blur();
-}
-function clearStore(tab){state[tab].filters.tienda=[];var input=document.getElementById(tab+'_tienda_search');if(input)input.value='';closeStoreResults(tab);renderDataTab(tab);if(input&&input.focus)input.focus()}
-document.addEventListener('click',function(e){if(!e.target.closest('.store-search'))['cafe','dt'].forEach(closeStoreResults);if(!e.target.closest('.ms'))['cafe','dt'].forEach(function(tab){closeMS(tab,'mes',false)});});
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['cafe','dt'].forEach(function(tab){var el=document.getElementById(tab+'_mes_ms');if(el&&el.classList.contains('open')){e.preventDefault();closeMS(tab,'mes',true);}});});
-
-function pad2(n){n=String(n);return n.length<2?'0'+n:n}
-function getOperationalContext(date){date=date||new Date();var day=date.getDay(),hour=date.getHours(),minute=date.getMinutes(),weekpart=day>=1&&day<=4?'Weekday':'Weekend',daypart='Afternoon';if(hour>=6&&hour<12)daypart='Morning';else if(hour>=12&&hour<17)daypart='Lunch';var dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];return{weekpart:weekpart,daypart:daypart,stamp:dias[day]+' '+pad2(date.getDate())+'/'+pad2(date.getMonth()+1)+' · '+pad2(hour)+':'+pad2(minute),key:weekpart+'|'+daypart+'|'+hour}}
-var operationalKey='';function applyOperationalContext(force){var ctx=getOperationalContext(),changed=ctx.key!==operationalKey;['cafe','dt'].forEach(function(tab){var automatic=state[tab].mode!=='manual';if(automatic){state[tab].filters.weekpart=[ctx.weekpart];state[tab].filters.daypart=[ctx.daypart];}syncCalculationContext(tab,ctx);if(force||(automatic&&changed))renderDataTab(tab);});operationalKey=ctx.key;}
-
-function getEngineFilters(tab){var f=state[tab].filters;return{Q:f.q,DayPart:f.daypart,Mes:f.mes,Semana:f.semana,Weekpart:f.weekpart,Tienda:f.tienda}}function calculate(tab){
- if(state[tab].filters.tienda.length!==1)return {registros:0,valid:false,basis:'units',requiresStore:true,mix:{},canales:{}};
- var source=window.PBT_WEEKLY;
- if(!source||!source.active||!source.ready||!source.engine)return {registros:0,valid:false,basis:'units',mix:{},canales:{},reason:'Motor CSV no disponible.'};
- try{return source.engine.calculate(getEngineFilters(tab),config[tab].tipoEngine)}catch(e){return {registros:0,valid:false,basis:'units',mix:{},canales:{},reason:'No se pudo calcular este filtro. Relee los motores en Acerca de.'};}
-}
-function pick(obj,names){for(var i=0;i<names.length;i++)if(obj&&obj[names[i]]!=null)return obj[names[i]];return 0}function valuesFromData(tab){
- var data=calculate(tab),mix=data.mix||{},canales=data.canales||{};
- function mapValues(ch,m){return {channels:{lobby:pick(ch,['Lobby','Cafe','CAFE']),mop:pick(ch,['Pick up & Delivery','PickUpDelivery','MOP & Delivery','MOP']),dt:tab==='dt'?pick(ch,['DT','Drive Thru']):0},mix:{esp:pick(m,['Espresso','ESPRESSO']),brew:pick(m,['Café filtrado','COD','Café Filtrado','CafeFiltrado','BREWED','Brewed']),cbs:pick(m,['CBS']),food:pick(m,['Food','FOOD']),other:pick(m,['Otro','Other','OTHER'])}}}
- var displayValues=mapValues(canales,mix),plan=mapValues(data.playCanales||canales,data.playMix||mix);
- if(!data.registros||!data.valid){Object.keys(displayValues.channels).forEach(function(k){displayValues.channels[k]=null});Object.keys(displayValues.mix).forEach(function(k){displayValues.mix[k]=null})}
- return {raw:data,partners:state[tab].partners,channels:displayValues.channels,mix:displayValues.mix,planChannels:plan.channels,planMix:plan.mix};
-}
-function renderDataTab(tab){
- var selected=state[tab].filters.tienda.length===1,controls=document.getElementById(tab+'_controls'),results=document.getElementById(tab+'_results'),button=document.getElementById(tab+'_export'),input=document.getElementById(tab+'_tienda_search'),error=document.getElementById(tab+'_store_error');
- if(!controls||!results)return;if(window.savePBTSession)savePBTSession();if(window.saveStorePlan)saveStorePlan(tab);if(tab===activeTab){document.getElementById('teamButton').disabled=!selected;if(!selected){document.getElementById('equipo').hidden=true;document.getElementById('teamButton').setAttribute('aria-expanded','false');}}input.disabled=!!(window.PBT_WEEKLY&&!PBT_WEEKLY.ready);input.placeholder=input.disabled?(PBT_WEEKLY.loading?'Cargando…':'Revisar motor'):'CeCo o tienda';input.setAttribute('aria-busy',String(input.disabled&&!!PBT_WEEKLY.loading));controls.hidden=!selected;results.hidden=!selected;error.textContent='';
- if(!selected){document.getElementById(tab+'_layout').innerHTML='';document.getElementById(tab+'_tbody').innerHTML='';document.getElementById(tab+'_channels').innerHTML='';document.getElementById(tab+'_mix').innerHTML='';button.disabled=true;setTotals(tab,{lobby:null,mop:null,dt:null},{esp:null,brew:null,cbs:null,food:null,other:null});if(window.updateAboutContext)updateAboutContext();return;}
- var c=config[tab],v=valuesFromData(tab),valid=!!v.raw.registros&&v.raw.valid===true;button.disabled=!valid||!!window.PBT_EXPORT_BUSY;
- var ch='',mx='';c.channelLabels.forEach(function(x){ch+='<div class="metric"><label>'+x[0]+'</label><span>'+pctText(v.channels[x[2]])+'</span></div>'});mixLabels.forEach(function(y){mx+='<div class="metric"><label>'+y[0]+'</label><span>'+pctText(v.mix[y[2]])+'</span></div>'});
- document.getElementById(tab+'_channels').innerHTML=ch;document.getElementById(tab+'_mix').innerHTML=mx;setTotals(tab,v.channels,v.mix);renderPBTAudit(tab,v.raw);
- if(!valid){var reason=v.raw.reason||'Sin datos para este filtro.';document.getElementById(tab+'_layout').innerHTML='<div class="empty-motor">'+escHtml(reason)+'</div>';document.getElementById(tab+'_tbody').innerHTML='';}
- else {var res=getPlay(tab,v.partners,v.planChannels,v.planMix);renderLayout(tab,res.play);renderRoutines(tab,res.play);}
- if(window.updateAboutContext)updateAboutContext();
-}
-function setPartners(tab){state[tab].partners=Number(document.getElementById(tab+'_partners').value);renderDataTab(tab)}function syncPartnerTabletSelects(){var el=document.getElementById('dt_partnerTablet_filter');if(el)el.value=state.dt.partnerTablet||'No'}function setPartnerTablet(tab,value){if(tab==='dt'){state.dt.partnerTablet=value||'No';syncPartnerTabletSelects();renderDataTab(tab)}}function showTab(tab,keepSelection){
- if(!['cafe','dt'].includes(tab))return;
- activeTab=tab;if(!document.getElementById('equipo').hidden)buildEquipo();
- ['cafe','dt'].forEach(function(name){document.getElementById(name).classList.toggle('active',name===tab);var button=document.getElementById(name==='cafe'?'tabCafe':'tabDt');button.classList.toggle('active',name===tab);button.setAttribute('aria-selected',String(name===tab));button.setAttribute('tabindex',name===tab?'0':'-1');closeStoreResults(name);closeMS(name,'mes',false)});renderDataTab(tab);if(!keepSelection&&!state[tab].filters.tienda.length){var input=document.getElementById(tab+'_tienda_search');if(input&&!input.disabled&&input.focus)input.focus();}
-}
-function initPBT(){if(typeof EXCEL_DATA==='undefined'||typeof PBT_DIRECTORY==='undefined'||typeof PBT_SHEET==='undefined'){document.getElementById('appLoading').textContent='No se pudo cargar PBT. Recarga la página.';return;}buildPage('cafe');buildPage('dt');populateFilters();syncPartnerTabletSelects();applyOperationalContext(true);setInterval(function(){applyOperationalContext(false)},60000)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPBT);else initPBT();
-</script>
-<script>
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js?v=26').then(function(reg){if(reg&&reg.update)reg.update().catch(function(){/* Keep the installed version if the network is unavailable. */});console.log('PBT Web 2.0 v26 listo',reg.scope)}).catch(function(err){console.log('No se pudo registrar sw.js',err)})})}
-</script>
 </body>
 </html>

@@ -7,9 +7,9 @@ function fixture(){
  const memory=new Map(),device={get:k=>memory.has(k)?JSON.parse(memory.get(k)):undefined,set:(k,v)=>{memory.set(k,JSON.stringify(v));return Promise.resolve(true);},legacy:()=>null,requestPersistence(){}};
  const context={console,addEventListener(){},PBT_DEVICE:device,document:{readyState:'loading',addEventListener(){},getElementById:node,querySelectorAll:()=>[]},navigator:{},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},setInterval(){},PBT_SHEET:require('../js/sheet-template.js'),EXCEL_DATA:{},PBT_WEEKLY:{active:true,ready:true,engine},PBT_DIRECTORY:require('../js/store-directory.js'),pbtContextHTML:()=>'',pbtWeekLabel:v=>v==='Weekend'?'Vie–Dom':'Lun–Jue',pbtDayLabel:v=>({Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'}[v]),syncCalculationContext(){},renderPBTAudit(){},updateAboutContext(){},savePBTContext(){}};
  context.window=context;vm.createContext(context);
- const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(match[1].trim())vm.runInContext(match[1],context);
+ const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8')+'<script>'+fs.readFileSync(path.join(__dirname,'../js/ui.js'),'utf8')+'</script>';for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(match[1].trim())vm.runInContext(match[1],context);
  node('equipo').hidden=true;vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/device-ui.js'),'utf8'),context);
- context.renderLayout=()=>{};context.renderRoutines=()=>{};vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/print.js'),'utf8'),context);
+ context.getPlay=()=>({play:'test-plan'});context.renderLayout=()=>{};context.renderRoutines=()=>{};vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/print.js'),'utf8'),context);
  return {context,node,engine,result,get calls(){return calls;},get filters(){return lastFilters;}};
 }
 test('the UI never calculates or displays aggregate data before a store is selected',()=>{
@@ -94,4 +94,10 @@ test('saved CeCo, months, manual context and partner counts restore together',()
  const f=fixture(),c=f.context;c.PBT_DEVICE.set('session',{activeTab:'dt',dt:{store:'CeCo 38134',mode:'manual',mes:['Ene 2026'],weekpart:'Weekend',daypart:'Afternoon',partners:6,partnerTablet:'Sí'},cafe:{store:'CeCo 38333',partners:5}});
  c.restorePBTSession();assert.equal(c.activeTab,'dt');assert.equal(c.state.dt.filters.tienda[0],'CeCo 38134');assert.equal(c.state.dt.partners,6);assert.equal(c.state.dt.mode,'manual');assert.equal(c.state.dt.filters.daypart[0],'Afternoon');assert.equal(c.state.dt.filters.mes[0],'Ene 2026');
  c.state.dt.partners=7;c.savePBTSession();assert.equal(c.PBT_DEVICE.get('session').dt.partners,7);
+});
+
+test('incomplete catalogs and unsupported combinations cannot export a fabricated plan',()=>{
+ const f=fixture(),c=f.context;c.state.cafe.filters.tienda=['CeCo 38333'];c.PBT_PLAN={ready:false};
+ c.renderDataTab('cafe');assert.equal(f.node('cafe_export').disabled,true);assert.match(f.node('cafe_layout').innerHTML,/Preparando el plan/);assert.throws(()=>c.buildPBTSnapshot('cafe'),/Espera/);
+ c.PBT_PLAN.ready=true;c.getPlay=()=>({play:undefined});c.renderDataTab('cafe');assert.equal(f.node('cafe_export').disabled,true);assert.match(f.node('cafe_layout').innerHTML,/No existe un plan original/);assert.equal(f.node('cafe_tbody').innerHTML,'');assert.throws(()=>c.buildPBTSnapshot('cafe'),/plan original/);
 });
