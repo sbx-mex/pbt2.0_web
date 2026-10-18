@@ -9,8 +9,10 @@ import re
 import subprocess
 try:
     from .build_weekly_motor import ROOT, build, serialize, week_info
+    from .build_store_directory import read_compiled
 except ImportError:
     from build_weekly_motor import ROOT, build, serialize, week_info
+    from build_store_directory import read_compiled
 
 class Links(HTMLParser):
     def __init__(self):super().__init__();self.paths=[];self.ids=[]
@@ -22,12 +24,12 @@ class Links(HTMLParser):
             if value and not value.startswith(('#','http:','https:','data:')):self.paths.append(value.split('?')[0])
 
 def audit(root: Path=ROOT) -> dict:
-    html=(root/'index.html').read_text()
+    html=(root/'index.html').read_text(encoding='utf-8')
     parser=Links();parser.feed(html)
     assert len(parser.ids)==len(set(parser.ids)), 'Hay identificadores HTML duplicados'
     for path in parser.paths:assert (root/path).is_file(),f'Falta recurso: {path}'
     assert hashlib.sha256((root/'js/excel_data.js').read_bytes()).hexdigest()=='19a88dd281e180667ac7ff2561b7d8b371b746e777002942053e11eee28a6a77','El motor original PBT.24 cambió'
-    base=(root/'js/data.js').read_text()
+    base=(root/'js/data.js').read_text(encoding='utf-8')
     constants={name:json.loads(re.search(r'const '+name+r'=(.*?);',base,re.S).group(1)) for name in ['PBT_MESES','PBT_SEMANAS','PBT_DATA']}
     combinations={(constants['PBT_SEMANAS'][row[3]],constants['PBT_MESES'][row[2]]) for row in constants['PBT_DATA']}
     assert all(week_info('2026'+str(week).zfill(2))['label'].startswith(month+' ') for week,month in combinations),'El calendario no coincide con los meses del PBT original'
@@ -38,22 +40,29 @@ def audit(root: Path=ROOT) -> dict:
         function=html[start:html.index('function '+end+'(',start)]
         assert hashlib.sha256(function.encode()).hexdigest()==digest,'Se alteró la función original '+name
     assert "filterHTML(tab,'semana'" not in html and "filterHTML(tab,'q'" not in html,'Hay filtros de periodo adicionales al mes'
-    renderer=(root/'js/pdf-renderer.js').read_text()
+    renderer=(root/'js/pdf-renderer.js').read_text(encoding='utf-8')
     assert 'PAGE=[612,792],MARGIN=36' in renderer,'Falta carta de 612 × 792 pt con márgenes de 36 pt'
     assert "['Fijo',31]" in renderer and 'tableHeader();' in renderer,'Falta estado Fijo o encabezado de rutinas'
     assert (root/'js/vendor/pdf-lib.min.js').is_file() and (root/'js/vendor/pdf-lib.LICENSE').is_file(),'Falta el exportador local o su licencia'
-    assert 'multiple' not in re.search(r'<select id=".*?_manual_weekpart.*?</select>',(root/'js/weekly-ui.js').read_text()).group(0),'Los días deben ser selección única'
+    assert 'multiple' not in re.search(r'<select id=".*?_manual_weekpart.*?</select>',(root/'js/weekly-ui.js').read_text(encoding='utf-8')).group(0),'Los días deben ser selección única'
+    directory=read_compiled(root/'js/store-directory.js')
+    assert 'aboutDialog' in parser.ids and 'aboutButton' in parser.ids,'Falta Acerca de'
+    assert 'tabEquipo' not in parser.ids,'La navegación principal sólo debe mostrar Café y DT'
+    assert 'Diseñado por Enrique' not in renderer,'La firma no debe imprimirse'
+    assert 'window.PBT_DIRECTORY' not in renderer,'El exportador debe conservar su snapshot'
     pack=build(root/'data/motores')
-    expected=serialize(pack);assert (root/'data/motores/indice.json').read_text()==expected,'Índice desactualizado'
+    codes={row[0] for row in directory['stores']}
+    assert all(code in codes for code,kind in pack['stores']),'Hay CeCo sin nombre en el directorio'
+    expected=serialize(pack);assert (root/'data/motores/indice.json').read_text(encoding='utf-8')==expected,'Índice desactualizado'
     assert len(expected.encode())<=64*1024*1024,'Divide el archivo histórico: el índice supera 64 MB'
     for path in [root/'sw.js',*list((root/'js').glob('*.js'))]:subprocess.run(['node','--check',str(path)],check=True,capture_output=True)
     # Inline scripts are still part of the original UI and must compile, too.
     for script in re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,re.S):
         if script.strip():subprocess.run(['node','--check','-'],input=script,text=True,capture_output=True,check=True)
-    workflow=(root/'.github/workflows/motores-semanales.yml').read_text()
+    workflow=(root/'.github/workflows/motores-semanales.yml').read_text(encoding='utf-8')
     actions=re.findall(r'uses:\s*(\S+)',workflow)
     assert actions and all(re.fullmatch(r'[^@]+@[a-f0-9]{40}',action) for action in actions),'Falta fijar acciones a SHA'
-    return {'estado':'VERDE','version':'20','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode())}
+    return {'estado':'VERDE','version':'21','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
 
 if __name__=='__main__':
     try:print(json.dumps(audit(),ensure_ascii=False,indent=2))

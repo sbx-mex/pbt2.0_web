@@ -49,8 +49,8 @@
   function improveTabs(){
     if(typeof window.showTab!=='function'||window.showTab.__accessible)return;
     var original=window.showTab;
-    window.showTab=function(tab){
-      original(tab);
+    window.showTab=function(tab,keepSelection){
+      original(tab,keepSelection);
       ['cafe','dt','equipo'].forEach(function(name){
         var button=document.getElementById(name==='cafe'?'tabCafe':name==='dt'?'tabDt':'tabEquipo');
         if(button)button.setAttribute('aria-selected',String(name===tab));

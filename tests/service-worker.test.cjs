@@ -23,3 +23,7 @@ test('cache cleanup preserves other projects and their saved files',async()=>{
  await cache.put('https://example.test/other/js/data.js',new Response('other'));await f.caches.open('controlops-cache');await f.activate();
  assert.ok(f.databases.has('controlops-cache'));assert.ok(await cache.match('https://example.test/other/js/data.js'));assert.equal(await cache.match(f.scope+'js/data.js'),undefined);
 });
+test('V21 keeps the cached original engine available across the interface upgrade',async()=>{
+ const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v20-data',cache=await f.caches.open(name);await cache.put(f.scope+'js/excel_data.js?v=20',new Response('original engine'));
+ await f.activate();f.setNetwork(async()=>{throw Error('offline');});assert.equal(await(await f.request('js/excel_data.js?v=20')).text(),'original engine');
+});

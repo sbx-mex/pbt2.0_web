@@ -21,7 +21,7 @@ DAYS={'Lun-Jue':'Weekday','Vie-Dom':'Weekend'}
 PARTS={'1_Mañana':'Morning','2_Intermedio':'Lunch','3_Tarde':'Afternoon'}
 
 def audit(root=ROOT):
-    pack=json.loads((root/'data/motores/indice.json').read_text())
+    pack=json.loads((root/'data/motores/indice.json').read_text(encoding='utf-8'))
     stores=dict(pack['stores']);raw=defaultdict(lambda:[Decimal(0)]*18);dt=set();row_count=0
     for meta in pack['files']:
         text=decode((root/'data/motores'/meta['path']).read_bytes());lines=text.splitlines()
@@ -64,13 +64,13 @@ def audit(root=ROOT):
             for index,name in enumerate(names):assert abs(actual['units'][key][name]-float(expected[offset+index]))<1e-6,case
             if actual['valid']:
                 displayed=actual['mix'] if key=='mix' else actual['canales']
-                assert sum(round(value*10) for value in displayed.values())==1000,case
+                assert sum(displayed.values())==100 and all(value==int(value) for value in displayed.values()),case
                 for index,name in enumerate(names):
                     exact=float(expected[offset+index]/expected[0]*100)
-                    assert abs(displayed[name]-exact)<.1000001,(case,name,displayed[name],exact)
+                    assert abs(displayed[name]-exact)<1.0000001,(case,name,displayed[name],exact)
             else:assert all(value is None for value in (actual['mix'] if key=='mix' else actual['canales']).values()),case
         valid+=int(actual['valid']);invalid+=int(not actual['valid'])
-    return {'estado':'VERDE','csv':len(pack['files']),'registros_csv':row_count,'casos_filtrados':len(cases),'selecciones_validas':valid,'selecciones_sin_base_positiva':invalid,'tiendas_DT_con_evidencia':len(dt),'unidades_actuales':sum(f['units'] for f in pack['files']),'unidades_AA':sum(f['unitsAA'] for f in pack['files']),'porcentajes_por_unidades':True,'cierre_a_100_con_decimas':True,'desviacion_redondeo_menor_a_0_1_puntos':True}
+    return {'estado':'VERDE','csv':len(pack['files']),'registros_csv':row_count,'casos_filtrados':len(cases),'selecciones_validas':valid,'selecciones_sin_base_positiva':invalid,'tiendas_DT_con_evidencia':len(dt),'unidades_actuales':sum(f['units'] for f in pack['files']),'unidades_AA':sum(f['unitsAA'] for f in pack['files']),'porcentajes_por_unidades':True,'cierre_a_100_con_enteros':True,'desviacion_redondeo_menor_a_1_punto':True}
 
 if __name__=='__main__':
     try:print(json.dumps(audit(),ensure_ascii=False,indent=2))

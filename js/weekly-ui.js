@@ -2,31 +2,39 @@
  'use strict';
  const $=id=>document.getElementById(id);
  let handle=null,lastPack=null,kind='repo',label='data/motores/',busy=false,cancelRead=null;
- window.PBT_WEEKLY={active:false,engine:null};
+ window.PBT_WEEKLY={active:false,engine:null,ready:false};
  const esc=value=>String(value||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
  window.pbtWeekLabel=value=>value==='Weekend'?'Vie–Dom':'Lun–Jue';
  window.pbtDayLabel=value=>({Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'}[value]||value||'');
  window.pbtContextHTML=function(tab){
-  return '<div class="op-clock-card" id="'+tab+'_op_clock"><div class="context-top"><span class="op-label">Cálculo</span><button class="context-toggle" id="'+tab+'_mode" type="button" aria-pressed="false" onclick="setCalculationMode(\''+tab+'\')">Automático</button></div><div class="manual-context" id="'+tab+'_manual_context"><label>Días de la semana<select id="'+tab+'_manual_weekpart" onchange="setManualContext(\''+tab+'\')"><option value="Weekday">Lun–Jue</option><option value="Weekend">Vie–Dom</option></select></label><label>Turno · Day Part<select id="'+tab+'_manual_daypart" onchange="setManualContext(\''+tab+'\')"><option value="Morning">Mañana · 06–12 h</option><option value="Lunch">Intermedio · 12–17 h</option><option value="Afternoon">Tarde · 17–06 h</option></select></label></div><small class="op-rule">Según el reloj de este dispositivo</small><span class="op-time" hidden></span><span class="op-context" hidden></span></div>';
+  return '<div class="op-clock-card" id="'+tab+'_op_clock"><div class="context-top"><span class="op-label">Cálculo</span><button class="context-toggle" id="'+tab+'_mode" type="button" aria-pressed="false" onclick="setCalculationMode(\''+tab+'\')">Automático</button></div><div class="manual-context" id="'+tab+'_manual_context"><label for="'+tab+'_manual_weekpart">Días de la semana<select id="'+tab+'_manual_weekpart" onchange="setManualContext(\''+tab+'\')"><option value="Weekday">Lun–Jue</option><option value="Weekend">Vie–Dom</option></select></label><label for="'+tab+'_manual_daypart">Turno<select id="'+tab+'_manual_daypart" onchange="setManualContext(\''+tab+'\')"><option value="Morning">Mañana</option><option value="Lunch">Intermedio</option><option value="Afternoon">Tarde</option></select></label></div></div>';
  };
  window.syncCalculationContext=function(tab,ctx){
   const current=state[tab],manual=current.mode==='manual',box=$(tab+'_op_clock');if(!box)return;
   $(tab+'_mode').textContent=manual?'Manual':'Automático';$(tab+'_mode').setAttribute('aria-pressed',String(manual));
   $(tab+'_manual_weekpart').value=current.filters.weekpart[0]||ctx.weekpart;
   $(tab+'_manual_daypart').value=current.filters.daypart[0]||ctx.daypart;
-  box.querySelector('.op-time').textContent=ctx.stamp;
-  box.querySelector('.op-context').textContent=pbtWeekLabel(current.filters.weekpart[0])+' · '+pbtDayLabel(current.filters.daypart[0]);
-  box.querySelector('.op-rule').textContent=manual?'Tu selección se conserva. Activa Automático para usar el reloj.':'Según el reloj del dispositivo. Elegir días o turno activa Manual.';
  };
- window.pbtAuditHTML=tab=>'<details class="audit-detail"><summary>Consultar unidades y comparativo AA</summary><div class="audit-body" id="'+tab+'_audit"></div></details>';
+ window.updateAboutContext=function(){
+  const tab=activeTab,selected=state[tab]?.filters.tienda.length===1;
+  for(const name of ['cafe','dt'])$(name+'_audit_section').hidden=!selected||name!==tab;
+  $('aboutContext').textContent=selected?pbtStoreLabel(state[tab].filters.tienda[0])+' · '+(state[tab].filters.mes.join(', ')||'Meses disponibles')+' · '+pbtWeekLabel(state[tab].filters.weekpart[0])+' · '+pbtDayLabel(state[tab].filters.daypart[0]):'Elige una tienda en Café o DT para consultar sus unidades.';
+ };
+ window.openAbout=function(){
+  updateAboutContext();const dialog=$('aboutDialog');$('aboutButton').setAttribute('aria-expanded','true');
+  if(!dialog.open){if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');}
+  dialog.setAttribute('aria-modal','true');
+ };
+ window.closeAbout=function(){const dialog=$('aboutDialog');if(dialog.close)dialog.close();else dialog.removeAttribute('open');dialog.removeAttribute('aria-modal');$('aboutButton').setAttribute('aria-expanded','false');$('aboutButton').focus();};
+ window.pbtAuditHTML=()=>'';
  window.renderPBTAudit=function(tab,data){
   const box=$(tab+'_audit');if(!box)return;
   if(data.basis!=='units'){box.textContent='La base original calcula sobre venta. Abre los motores CSV para consultar unidades y AA.';return;}
   const n=value=>value==null?'No disponible':Number(value).toLocaleString('es-MX',{maximumFractionDigits:2}),total=data.unidades;
   const row=(name,value,aa)=>'<tr><td>'+esc(name)+'</td><td>'+n(value)+'</td><td>'+n(aa)+'</td></tr>';
   const table=(title,units,aa)=>'<h3>'+title+'</h3><table><thead><tr><th>Concepto</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+Object.entries(units).filter(([key])=>key!=='DT'||tab==='dt').map(([key,value])=>row(key==='Café filtrado'?'COD':key,value,aa?.[key])).join('')+row('Total',total,data.unidadesAA)+'</tbody></table>';
-  box.innerHTML='<p>Mismos meses, tienda, días y turno que la vista. Cada porcentaje = unidades de la categoría ÷ unidades totales seleccionadas. El cierre a 100.0% distribuye únicamente las décimas de redondeo.</p>'+table('Distribución de canal',data.units.channels,data.aa?.channels)+table('Mix de producto',data.units.mix,data.aa?.mix)+'<h3>Comparativo por semana</h3><table><thead><tr><th>Semana actual / AA</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+data.weekly.map(item=>row(item.week.slice(0,4)+' · S'+item.week.slice(4)+' / '+(Number(item.week.slice(0,4))-1)+' · S'+item.week.slice(4),item.units,item.unitsAA)).join('')+'</tbody></table><p>AA es el valor informado por el CSV para el año anterior; nunca se suma al denominador actual. '+(data.hasAA?'':'Para consultar AA de todas las semanas, relee los CSV que incluyan la columna Unidades AA.')+'</p>';
+  box.innerHTML='<p>Mismos meses, tienda, días y turno que la vista. Cada porcentaje = unidades de la categoría ÷ unidades totales seleccionadas. El cierre a 100% reparte el residuo de redondeo entre las categorías; no modifica las unidades.</p>'+table('Distribución de canal',data.units.channels,data.aa?.channels)+table('Mix de producto',data.units.mix,data.aa?.mix)+'<h3>Comparativo por semana</h3><table><thead><tr><th>Semana actual / AA</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+data.weekly.map(item=>row(item.week.slice(0,4)+' · S'+item.week.slice(4)+' / '+(Number(item.week.slice(0,4))-1)+' · S'+item.week.slice(4),item.units,item.unitsAA)).join('')+'</tbody></table><p>AA es el valor informado por el CSV para el año anterior; nunca se suma al denominador actual. '+(data.hasAA?'':'Para consultar AA de todas las semanas, relee los CSV que incluyan la columna Unidades AA.')+'</p>';
  };
  function saveContext(){
   try{localStorage.setItem('pbt-v19-context',JSON.stringify(Object.fromEntries(['cafe','dt'].map(tab=>[tab,{mode:state[tab].mode,weekpart:state[tab].filters.weekpart[0],daypart:state[tab].filters.daypart[0]}]))));}catch{}
@@ -49,17 +57,13 @@
  };
  function refreshViews(){
   for(const tab of ['cafe','dt']){
-   const available=getSourceList('Mes'),stores=getStoreList(tab);
-   state[tab].filters.mes=state[tab].filters.mes.filter(value=>available.includes(value));
-   state[tab].filters.q=[];state[tab].filters.semana=[];
-   state[tab].filters.tienda=state[tab].filters.tienda.filter(value=>stores.includes(value));
-   if(!state[tab].filters.tienda.length){$(tab+'_tienda_search').value='';$(tab+'_tienda_selected').textContent='Todas las tiendas';}
+   const available=getSourceList('Mes'),stores=getStoreList(tab),previous=state[tab].filters.tienda[0];
+   state[tab].filters.mes=state[tab].filters.mes.filter(value=>available.includes(value));state[tab].filters.q=[];state[tab].filters.semana=[];
+   const code=previous&&PBT_DIRECTORY.codeOf(previous),matching=previous&&(stores.includes(previous)?previous:(code?stores.find(value=>PBT_DIRECTORY.codeOf(value)===code):null));
+   state[tab].filters.tienda=matching?[matching]:[];$(tab+'_tienda_search').value=matching?pbtStoreLabel(matching):'';
   }
   populateFilters();
-  for(const tab of ['cafe','dt']){
-   for(const input of document.querySelectorAll('#'+tab+'_mes_options input'))input.checked=state[tab].filters.mes.includes(input.value);
-   renderDataTab(tab);
-  }
+  for(const tab of ['cafe','dt']){for(const input of document.querySelectorAll('#'+tab+'_mes_options input'))input.checked=state[tab].filters.mes.includes(input.value);renderDataTab(tab);}
  }
  function status(message,isError=false){$('motorStatus').textContent=message;$('motorStatus').classList.toggle('motor-error',isError);$('motorPanel').classList.toggle('motor-has-error',isError);if(isError)$('motorOrigin').textContent=PBT_WEEKLY.active?'CSV activos · nueva lectura sin aplicar':'Base original activa · revisa la lectura CSV';}
  function showFiles(pack){
@@ -85,8 +89,8 @@
  async function activate(pack,source,sourceKind,nextHandle=null,persist=true){
   pack=PBT_WEEKLY_CORE.migratePack(pack);
   const engine=PBT_WEEKLY_CORE.engine(pack); // Validate completely before switching the active source.
-  PBT_WEEKLY.engine=engine;PBT_WEEKLY.active=true;lastPack=pack;kind=sourceKind;label=source;handle=nextHandle;
-  refreshViews();showFiles(pack);status(pack.legacyAA?'Lectura anterior recuperada. Relee la carpeta para validar DT y consultar AA por segmento.':'Lectura completa. Unidades actuales y AA conciliadas por segmento.');
+  PBT_WEEKLY.engine=engine;PBT_WEEKLY.active=true;PBT_WEEKLY.ready=true;lastPack=pack;kind=sourceKind;label=source;handle=nextHandle;
+  refreshViews();showFiles(pack);status(pack.legacyAA?'Lectura anterior recuperada. Relee la carpeta para validar DT y consultar AA por segmento.':(pack.files.every(file=>file.hasAA)?'Lectura completa. Unidades actuales y AA conciliadas por segmento.':'Lectura completa. AA no disponible en todas las semanas.'));
   if(persist){try{await storage('put',{pack,label,kind,handle});}catch{
    try{await storage('put',{pack,label,kind});}catch{status('Lectura completa. Respaldo local no disponible; vuelve a abrir la carpeta al recargar.');}
   }}
@@ -105,7 +109,7 @@
   if(!selected.length)throw Error('La carpeta no contiene CSV semanales.');
   if(typeof Worker==='undefined')throw Error('Este navegador no permite leer CSV en segundo plano. Usa Chrome o Edge, o el motor publicado.');
   const pack=await new Promise((resolve,reject)=>{
-   const worker=new Worker('js/weekly-worker.js?v=20'),timeout=setTimeout(()=>finish(Error('La lectura tardó demasiado. Conserva la selección anterior e intenta con menos CSV.')),180000);
+   const worker=new Worker('js/weekly-worker.js?v=21'),timeout=setTimeout(()=>finish(Error('La lectura tardó demasiado. Conserva la selección anterior e intenta con menos CSV.')),180000);
    function finish(error,pack){clearTimeout(timeout);worker.terminate();cancelRead=null;error?reject(error):resolve(pack);}
    cancelRead=()=>finish(Error('Lectura cancelada. Se conserva el motor anterior.'));
    worker.onmessage=event=>{if(event.data.progress)status('Leyendo '+event.data.progress);else if(event.data.error)finish(Error(event.data.error));else if(event.data.pack)finish(null,event.data.pack);};
@@ -128,7 +132,7 @@
  async function run(action){
   if(busy)return;setBusy(true);
   try{await action();}catch(error){if(error.name!=='AbortError')status(error.message||'No terminó la lectura. Se conserva el motor anterior.',true);}
-  finally{setBusy(false);}
+  finally{if(!PBT_WEEKLY.ready){PBT_WEEKLY.ready=true;refreshViews();}setBusy(false);}
  }
  async function openFolder(){
   if(!('showDirectoryPicker' in window)){$('motorFolderInput').click();return;}
@@ -145,12 +149,15 @@
  }
  async function original(){
   if(busy)return;
-  PBT_WEEKLY.active=false;PBT_WEEKLY.engine=null;refreshViews();
+  PBT_WEEKLY.active=false;PBT_WEEKLY.engine=null;PBT_WEEKLY.ready=true;refreshViews();
   $('motorOrigin').textContent='Base original activa';$('motorSummary').textContent='Porcentajes sobre venta · PBT original';$('motorFolderLabel').textContent='js/data.js';
   status('Base original activa. CSV y venta se calculan por separado.');
   try{await storage('put',{original:true,pack:lastPack,label,kind,handle});}catch{try{await storage('put',{original:true,pack:lastPack,label,kind});}catch{}}
  }
  document.addEventListener('DOMContentLoaded',async()=>{
+  $('directorySummary').textContent='Directorio: '+PBT_DIRECTORY.data.stores.length.toLocaleString('es-MX')+' cruces CeCo–Tienda, tomados de '+PBT_DIRECTORY.data.source+'.';
+  $('aboutDialog').addEventListener('close',()=>{$('aboutButton').setAttribute('aria-expanded','false');$('aboutButton').focus();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('aboutDialog').hasAttribute('open'))closeAbout();});
   $('openMotorFolder').addEventListener('click',openFolder);$('reloadMotorFolder').addEventListener('click',reload);$('useOriginalMotor').addEventListener('click',original);
   $('pickMotorCsv').addEventListener('click',()=>$('motorFilesInput').click());$('cancelMotorRead').addEventListener('click',()=>cancelRead?.());
   for(const id of ['motorFolderInput','motorFilesInput'])$(id).addEventListener('change',event=>{
@@ -164,5 +171,6 @@
   }else await run(async()=>{
    try{await loadRepository();}catch(error){if(saved?.pack){await activate(saved.pack,saved.label,'repo',null,false);status('Sin conexión. Se recuperó la última lectura guardada.');$('motorOrigin').textContent='CSV activos · respaldo guardado';$('motorReadAt').textContent='Última lectura recuperada';}else throw error;}
   });
+  if(!PBT_WEEKLY.ready){PBT_WEEKLY.ready=true;refreshViews();}
  });
 })();

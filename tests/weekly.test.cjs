@@ -88,10 +88,10 @@ test('uploaded consolidated workbook logic reproduces all store/week/context sel
   const selected=f.rows.filter(r=>r[0]===year&&r[2]===store&&r[3]===days&&r[4]===part&&(!week||r[1]===week));
   const total=selected.reduce((n,r)=>n+r[7],0),weeks=week?[String(year)+String(week).padStart(2,'0')]:[28,29,30,31,32].map(w=>String(year)+w);
   const r=e.calculate({Tienda:['CeCo '+store],Semana:weeks,Weekpart:[days==='Lun-Jue'?'Weekday':'Weekend'],DayPart:[{'1_Mañana':'Morning','2_Intermedio':'Lunch','3_Tarde':'Afternoon'}[part]]});
-  assert.equal(r.unidades,total);if(total){assert.equal(tenths(r.mix),1000);assert.equal(tenths(r.canales),1000);}
-  for(const [field,labels,output] of [[5,['Lobby','Pick up & Delivery'],r.canales],[6,['Espresso','COD','CBS','Food','Otro'],r.mix]])for(const label of labels){const units=selected.filter(row=>row[field]===label).reduce((n,row)=>n+row[7],0),key=label==='COD'?'Café filtrado':label;assert.equal(r.units[field===5?'channels':'mix'][key],units);if(total)assert.ok(Math.abs(output[key]-units/total*100)<.100001);}
+  assert.equal(r.unidades,total);if(total){assert.equal(tenths(r.mix),1000);assert.equal(tenths(r.canales),1000);assert.ok(Object.values(r.mix).every(Number.isInteger));assert.ok(Object.values(r.canales).every(Number.isInteger));}
+  for(const [field,labels,output] of [[5,['Lobby','Pick up & Delivery'],r.canales],[6,['Espresso','COD','CBS','Food','Otro'],r.mix]])for(const label of labels){const units=selected.filter(row=>row[field]===label).reduce((n,row)=>n+row[7],0),key=label==='COD'?'Café filtrado':label;assert.equal(r.units[field===5?'channels':'mix'][key],units);if(total)assert.ok(Math.abs(output[key]-units/total*100)<1.000001);}
   checked++;
  }
  const example=e.calculate({Tienda:['CeCo 38368'],Semana:[28,29,30,31,32].map(w=>'2025'+w),DayPart:['Afternoon'],Weekpart:['Weekday']});
- assert.equal(example.unidades,f.example.total);assert.deepEqual(Object.values(example.mix),f.example.mix);assert.deepEqual([example.canales.Lobby,example.canales['Pick up & Delivery']],f.example.channels);assert.equal(checked,144);
+ assert.equal(example.unidades,f.example.total);assert.deepEqual(Object.values(example.mix),[36,3,45,12,4]);assert.deepEqual(core.apportion([1166,90,1426,372,124],1),f.example.mix);assert.deepEqual([example.canales.Lobby,example.canales['Pick up & Delivery']],f.example.channels);assert.equal(checked,144);
 });

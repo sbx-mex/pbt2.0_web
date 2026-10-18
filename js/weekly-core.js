@@ -153,7 +153,7 @@
    const mixUnits=sum.slice(1,6),channelUnits=sum.slice(6,9),activeWeeks=[...byWeek.keys()].sort();
    const valid=sum[0]>0&&[...mixUnits,...channelUnits].every(value=>value>=0);
    const hasAA=activeWeeks.length>0&&activeWeeks.every(week=>files.get(week).hasAA);
-   const actualMix=apportion(mixUnits),actualChannels=apportion(channelUnits),playMix=apportion(mixUnits,0),playChannels=apportion(channelUnits,0);
+   const actualMix=apportion(mixUnits,0),actualChannels=apportion(channelUnits,0),playMix=actualMix,playChannels=actualChannels;
    const result={registros:sum[9],tiendasVisibles:visible.size,unidades:sum[0],unidadesAA:hasAA?sum[10]:null,hasAA,basis:'units',weeks:activeWeeks,weekly:activeWeeks.map(week=>byWeek.get(week)),valid,
     reason:valid?'':sum[0]<=0?'Sin unidades positivas para esta selección.':'Hay categorías con saldo negativo. Revisa los ajustes del CSV antes de generar un plan.',
     mix:object(MIX_NAMES,valid?actualMix:null),canales:object(CHANNEL_NAMES,valid?actualChannels:null),

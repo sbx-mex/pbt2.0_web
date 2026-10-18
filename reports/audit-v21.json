@@ -1,0 +1,290 @@
+{
+  "version": "21",
+  "estado_local": "VERDE",
+  "fecha_UTC": "2026-10-18T08:04:55.400938+00:00",
+  "repositorio": "sbx-mex/pbt2.0_web",
+  "base_commit": "385d7f17fd84b299d143ffe628127f5750672299",
+  "alcance": "Actualización diferencial entregada en ZIP. V21 no se ha subido ni publicado desde esta sesión.",
+  "pruebas": {
+    "python": 15,
+    "node": 26,
+    "total": 41,
+    "fallos": 0
+  },
+  "unidades_y_porcentajes": {
+    "estado": "VERDE",
+    "csv": 16,
+    "registros_csv": 914196,
+    "casos_filtrados": 1980,
+    "selecciones_validas": 1956,
+    "selecciones_sin_base_positiva": 24,
+    "tiendas_DT_con_evidencia": 283,
+    "unidades_actuales": 101906671.0,
+    "unidades_AA": 104801123.0,
+    "porcentajes_por_unidades": true,
+    "cierre_a_100_con_enteros": true,
+    "desviacion_redondeo_menor_a_1_punto": true
+  },
+  "proyecto": {
+    "estado": "VERDE",
+    "version": "21",
+    "motores": 16,
+    "semanas": [
+      "202601",
+      "202602",
+      "202603",
+      "202604",
+      "202605",
+      "202606",
+      "202607",
+      "202608",
+      "202609",
+      "202610",
+      "202611",
+      "202612",
+      "202613",
+      "202614",
+      "202615",
+      "202616"
+    ],
+    "registros": 914196,
+    "unidades": 101906671.0,
+    "grupos": 90505,
+    "motor_original_sin_cambios": true,
+    "calendario_original_445": true,
+    "enlaces_locales": 11,
+    "formato_exportacion": "Carta vertical, margen 12.7 mm",
+    "indice_bytes": 9537529,
+    "tiendas_directorio": 993,
+    "cruces_CeCo_completos": true
+  },
+  "directorio": {
+    "estado": "VERDE",
+    "fuente": "Directorio_PBT.xlsx",
+    "sha256": "4f80db6981e32f9bf26f398e149e01b34cd63d0e8be37712df848e2549af1479",
+    "filas_directorio": 993,
+    "CeCo_duplicados": 0,
+    "tiendas_motor": 950,
+    "CeCo_sin_cruce": [],
+    "diferencias_entre_lectores_Python": 0,
+    "fuente_sin_modificar": true
+  },
+  "interacciones": {
+    "estado": "VERDE",
+    "files": 16,
+    "blankBeforeStore": true,
+    "noAggregateCalculations": true,
+    "manualContextPreserved": true,
+    "automaticContextUpdates": true,
+    "originalBaseRestored": true,
+    "aboutOwnsInformation": true,
+    "onlyCafeAndDT": true,
+    "letterSnapshots": true,
+    "monthMultiSelect": true,
+    "singleDayAndDaypart": true,
+    "autoRouteDT": true,
+    "directoryNames": true,
+    "clearOnTabNavigation": true,
+    "integerPercentages": true,
+    "printNamesOnlyWhenAssigned": true,
+    "emptySelectionBlocksPDF": true
+  },
+  "exportacion_PDF": {
+    "estado": "VERDE",
+    "pdf": [
+      {
+        "layout": "cafe",
+        "pages": 1,
+        "Letter": true,
+        "margin_mm": 12.7,
+        "text_inside_margins": true,
+        "integer_percentages": true,
+        "no_designer_or_instructions": true,
+        "no_placeholder_names": true
+      },
+      {
+        "layout": "dt",
+        "pages": 1,
+        "Letter": true,
+        "margin_mm": 12.7,
+        "text_inside_margins": true,
+        "integer_percentages": true,
+        "no_designer_or_instructions": true,
+        "no_placeholder_names": true
+      }
+    ]
+  },
+  "conservado": {
+    "excel_data_sha256": "19a88dd281e180667ac7ff2561b7d8b371b746e777002942053e11eee28a6a77",
+    "data_js_sha256": "6de15bb0aa0e0a6398b6aaa5a88fb8cddb1c1b5ce043c7385b90aa8e4f11c84b",
+    "funciones_originales_de_play_coordenadas_y_rutinas": true,
+    "calendario_PBT_445": true,
+    "CSV_sin_modificaciones": true,
+    "nombres_y_fotos_locales": true,
+    "cache_original_preservada_en_actualizacion": true
+  },
+  "cambios": {
+    "navegacion": [
+      "Café",
+      "DT"
+    ],
+    "inicio": "Sólo selector de tienda, sin cálculo agregado.",
+    "seleccion": "CeCo y nombre; al cambiar de pestaña se requiere seleccionar de nuevo.",
+    "informacion": "Instrucciones, motores, directorio, unidades, AA y equipo dentro de Acerca de.",
+    "porcentajes": "Enteros por mayor residuo; suma 100 en cada distribución válida.",
+    "PDF": "Sólo filtro, porcentajes, plano y rutinas. No imprime controles ni instrucciones.",
+    "nombres_en_PDF": "Letra y nombre si está asignado; sin texto Seleccionar.",
+    "firma_en_PDF": false,
+    "archivo_PDF_ejemplo": "PBT_38333_lun-jue_Manana_4Partners.pdf"
+  },
+  "limites": {
+    "dias_fuente": [
+      "Lun-Jue",
+      "Vie-Dom"
+    ],
+    "sin_base_valida": "No genera un plan ni permite PDF.",
+    "AA_ausente": "No disponible; no se fabrica cero.",
+    "base_original_venta": "Conserva nombres históricos. Si no hay equivalencia exacta en el directorio, no se inventa CeCo y se solicita usar el flujo CSV para exportar con CeCo.",
+    "version_publicada_previa": {
+      "sha": "385d7f17fd84b299d143ffe628127f5750672299",
+      "conclusion": "success",
+      "run_url": "https://github.com/sbx-mex/pbt2.0_web/actions/runs/39109592584",
+      "nota": "Es la publicación anterior, no un despliegue de V21."
+    }
+  },
+  "fuentes_csv": [
+    {
+      "path": "Base_Canal_Mix de Producto_01.csv",
+      "week": "202601",
+      "rows": 56471,
+      "sha256": "ce70a96a0ec9fedc2f678d742fb0a82c9053cd05f4db4d838aa8c8c03d9d3bfe"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_02.csv",
+      "week": "202602",
+      "rows": 56240,
+      "sha256": "72988d1048b3a007c2ff66ed8a1c812fb496b527b9f6f3ae9b454dd0505bd14e"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_03.csv",
+      "week": "202603",
+      "rows": 56523,
+      "sha256": "1bb3a2f76059de6f3023dfe2d8fce3a46bb86b9682e49078f7a90457b5583816"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_04.csv",
+      "week": "202604",
+      "rows": 56653,
+      "sha256": "1a8a013e0e0c9c9e0c74afa5af66c84ebf295c87dfbbda925db3446f043dd171"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_05.csv",
+      "week": "202605",
+      "rows": 57364,
+      "sha256": "83b49c8f3605f7d8c69c538d60d78964f01e1fb60825308b0ae7fb5327b9a965"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_06.csv",
+      "week": "202606",
+      "rows": 56841,
+      "sha256": "5531cce7d19a1b6480c3dacb174fcf11d0069ea3c01139b45ad351c9710159e3"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_07.csv",
+      "week": "202607",
+      "rows": 58298,
+      "sha256": "45ee8adbce60db0a4ef473ebf01720c40cd6590b430f916dbe8a9f5b2d5fd8ef"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_08.csv",
+      "week": "202608",
+      "rows": 57326,
+      "sha256": "95f653efa376e37caedfd62c4a7ee9faca75f512acd09e5289f251e770dae4c8"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_09.csv",
+      "week": "202609",
+      "rows": 57047,
+      "sha256": "acba7c4384c20a1034aafbc67495007cdeffdc2efdf32199b0737d17d9fcd8e4"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_10.csv",
+      "week": "202610",
+      "rows": 57010,
+      "sha256": "83f6b267c72f67a7515fad1f26ecea867daad81923083074d83584e568ef3b44"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_11.csv",
+      "week": "202611",
+      "rows": 57132,
+      "sha256": "0944cdea1407ce2e9361b22b23a00ba249dc684dc342df902ceb3eb5c97262e4"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_12.csv",
+      "week": "202612",
+      "rows": 57182,
+      "sha256": "786e3da35f8ac295e5757d191fc364a56018618b84dba32df168aa13b8e38e11"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_13.csv",
+      "week": "202613",
+      "rows": 57665,
+      "sha256": "bec44522ce0f0550004de52b44cf58f92d3f79856c694709ce86373442d73db8"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_14.csv",
+      "week": "202614",
+      "rows": 57466,
+      "sha256": "2a6d00a503ccda8b48524f50d6e4d3f1a4160583c7fde5b6089881eb5deec92f"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_15.csv",
+      "week": "202615",
+      "rows": 57570,
+      "sha256": "6a4237a25444314db234ac1ce6d2de647ecb874ec1ad7c994e185f690a585c02"
+    },
+    {
+      "path": "Base_Canal_Mix de Producto_16.csv",
+      "week": "202616",
+      "rows": 57408,
+      "sha256": "e914ec7785864e9674a770bf81de7ddb905365a3c4c0193a21b7916e442c176b"
+    }
+  ],
+  "instalacion_desde_ZIP": {
+    "estado": "VERDE",
+    "ZIP_sobre_base_limpia": true,
+    "assets_cache": 15,
+    "checks": [
+      {
+        "command": "python scripts/build_weekly_motor.py",
+        "returncode": 0,
+        "seconds": 16.48
+      },
+      {
+        "command": "python scripts/build_store_directory.py --check",
+        "returncode": 0,
+        "seconds": 0.04
+      },
+      {
+        "command": "python -m unittest discover -s tests -v",
+        "returncode": 0,
+        "seconds": 16.13
+      },
+      {
+        "command": "node --test tests/directory.test.cjs tests/pdf.test.cjs tests/service-worker.test.cjs tests/ui.test.cjs tests/weekly.test.cjs",
+        "returncode": 0,
+        "seconds": 14.68
+      },
+      {
+        "command": "python scripts/audit_percentages.py",
+        "returncode": 0,
+        "seconds": 21.69
+      },
+      {
+        "command": "python scripts/audit_weekly_project.py",
+        "returncode": 0,
+        "seconds": 19.34
+      }
+    ]
+  }
+}
