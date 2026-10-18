@@ -14,7 +14,7 @@ Conserva **Settings → Pages → Source → GitHub Actions**. El workflow exist
 - **Catálogo de planes más ligero.** Python transforma el original de 23.9 MB en 6.4 MB y verifica sus 459,256 búsquedas. Conserva candidatos, planes, coordenadas, rutinas y desempates originales. El navegador ya no descarga `excel_data.js`.
 - **Consulta por CeCo.** El motor usa un índice por tienda para evitar recorrer todo el histórico en cada filtro. Los porcentajes, unidades y AA conservan sus resultados.
 - **Respaldo antes de la red.** Recupera el motor guardado y lo valida antes de mostrarlo; después comprueba si existe una actualización.
-- **Sólo descarga cuando hay cambios.** Consulta el manifiesto y reutiliza el índice verificado si coincide. Evita descargar otra vez los 15.5 MB del índice cuando no cambió.
+- **Sólo descarga cuando hay cambios.** Consulta el manifiesto y reutiliza el índice verificado si coincide. Evita descargar otra vez el índice completo cuando no cambió.
 - **Actualización protegida.** Comprueba tamaño, SHA-256, semanas y relación entre índice y CSV. Una actualización inválida no reemplaza el plan activo.
 - **Menos trabajo repetido.** Reutiliza búsquedas de mezcla y elimina renderizados duplicados al elegir una tienda.
 
