@@ -24,6 +24,8 @@ jobs:
           python-version: '3.12'
       - name: Generar índice desde los CSV semanales
         run: python scripts/build_weekly_motor.py
+      - name: Validar directorio CeCo y Tienda
+        run: python scripts/build_store_directory.py --check
       - name: Pruebas Python
         run: python -m unittest discover -s tests -v
       - name: Conciliar lector JavaScript con Python
