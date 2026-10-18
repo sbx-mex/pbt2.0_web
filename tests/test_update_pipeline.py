@@ -28,6 +28,8 @@ class UpdatePipelineTests(unittest.TestCase):
             destination=Path(temporary)/'site';stage_site(destination)
             self.assertTrue((destination/'data/motores/manifest.json').is_file())
             self.assertTrue((destination/'js/excel_data.js').is_file())
+            self.assertFalse((destination/'js/data.js').exists())
+            self.assertTrue((destination/'js/sheet-template.js').is_file())
             self.assertEqual(list(destination.rglob('*.csv')),[])
             self.assertFalse((destination/'scripts').exists());self.assertFalse((destination/'tests').exists())
             with self.assertRaises(ValueError):stage_site(destination)

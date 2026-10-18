@@ -4,7 +4,7 @@ function fixture(){
  let calls=0,lastFilters=null;
  const result={registros:1,valid:true,basis:'units',unidades:100,tiendasVisibles:1,mix:{Espresso:36,'Café filtrado':3,CBS:45,Food:12,Otro:4},canales:{Lobby:95,'Pick up & Delivery':5,DT:0}};
  const engine={months:['Ene 2026'],stores:type=>type==='DT'?['CeCo 38134']:type==='CAFE'?['CeCo 38333']:['CeCo 38333','CeCo 38134'],typeOf:name=>name==='CeCo 38134'?'DT':'CAFE',calculate(filters){calls++;lastFilters=filters;assert.equal(filters.Tienda.length,1);return result;}};
- const context={console,document:{readyState:'loading',addEventListener(){},getElementById:node,querySelectorAll:()=>[]},navigator:{},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},setInterval(){},PBT_ENGINE:{calculate:()=>{throw Error('The weekly source must be used');}},EXCEL_DATA:{},PBT_WEEKLY:{active:true,ready:true,engine},PBT_DIRECTORY:require('../js/store-directory.js'),pbtContextHTML:()=>'',pbtWeekLabel:v=>v==='Weekend'?'Vie–Dom':'Lun–Jue',pbtDayLabel:v=>({Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'}[v]),syncCalculationContext(){},renderPBTAudit(){},updateAboutContext(){},savePBTContext(){}};
+ const context={console,document:{readyState:'loading',addEventListener(){},getElementById:node,querySelectorAll:()=>[]},navigator:{},localStorage:{getItem:()=>null,setItem(){},removeItem(){}},setInterval(){},PBT_SHEET:require('../js/sheet-template.js'),EXCEL_DATA:{},PBT_WEEKLY:{active:true,ready:true,engine},PBT_DIRECTORY:require('../js/store-directory.js'),pbtContextHTML:()=>'',pbtWeekLabel:v=>v==='Weekend'?'Vie–Dom':'Lun–Jue',pbtDayLabel:v=>({Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'}[v]),syncCalculationContext(){},renderPBTAudit(){},updateAboutContext(){},savePBTContext(){}};
  context.window=context;vm.createContext(context);
  const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');for(const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g))if(match[1].trim())vm.runInContext(match[1],context);
  context.renderLayout=()=>{};context.renderRoutines=()=>{};vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/print.js'),'utf8'),context);
@@ -29,4 +29,37 @@ test('Enter on a closed store search cannot select a stale hidden option',()=>{
  const f=fixture(),c=f.context;let clicks=0;const item={click:()=>clicks++};f.node('cafe_tienda_results').querySelector=()=>item;f.node('cafe_tienda_results').querySelectorAll=()=>[item];
  c.storeKeydown({key:'Enter',preventDefault(){}},'cafe');assert.equal(clicks,0);
  f.node('cafe_tienda_results').classList.add('open');c.storeKeydown({key:'Enter',preventDefault(){}},'cafe');assert.equal(clicks,1);
+});
+
+test('an unavailable CSV engine never falls back to historical sale data',()=>{
+ const f=fixture(),c=f.context;c.state.cafe.filters.tienda=['CeCo 38333'];c.PBT_WEEKLY.active=false;c.PBT_WEEKLY.ready=false;
+ c.PBT_ENGINE={calculate(){throw Error('Obsolete sale source was called');}};
+ assert.equal(c.calculate('cafe').valid,false);assert.deepEqual([...c.getSourceList('Mes')],[]);assert.equal(f.calls,0);
+ c.renderDataTab('cafe');assert.equal(f.node('cafe_export').disabled,true);assert.throws(()=>c.buildPBTSnapshot('cafe'),/Motor CSV no disponible/);
+});
+
+test('the PDF month range omits years without inventing unselected months',()=>{
+ const c=fixture().context;
+ assert.equal(c.pbtPeriodLabel(['Mar 2026','Ene 2026','Feb 2026','Feb 2026']),'Ene - Mar');
+ assert.equal(c.pbtPeriodLabel(['Ene 2026','Mar 2026','Abr 2026']),'Ene, Mar - Abr');
+ assert.equal(c.pbtPeriodLabel(['Ene 2026','Dic 2025']),'Dic - Ene');
+ assert.equal(c.pbtPeriodLabel(['Jun 2026']),'Jun');assert.throws(()=>c.pbtPeriodLabel([]),/Selecciona meses/);assert.throws(()=>c.pbtPeriodLabel(['Bad']),/Mes no válido/);
+});
+
+test('comments reflect the selected store and filters and explicitly identify the estimated current quarter',()=>{
+ const f=fixture(),c=f.context;c.state.cafe.filters={tienda:['CeCo 38333'],mes:['Ene 2026','Feb 2026'],weekpart:['Weekend'],daypart:['Lunch']};
+ const result=c.buildPBTSnapshot('cafe',new Date(2026,9,18));assert.equal(result.months,'Ene - Feb');assert.equal(result.days,'Vie - Dom');assert.equal(result.daypart,'Intermedio');
+ assert.match(result.comments,/38333 · Izcalli Mega/);assert.match(result.comments,/Ene - Feb, Vie - Dom y turno Intermedio/);assert.match(result.comments,/estimada del Q4 actual/);assert.doesNotMatch(result.comments,/2026/);
+});
+
+test('store search tolerates CeCo prefixes and mixed code/name queries and excludes directory-only stores',()=>{
+ const f=fixture(),c=f.context;
+ for(const query of ['ceco38333','38333 Izcalli','IZCÁLLI mega']){c.searchStore('cafe',query);assert.match(f.node('cafe_tienda_results').innerHTML,/38333 · Izcalli Mega/);}
+ c.searchStore('cafe','38101');assert.match(f.node('cafe_tienda_results').innerHTML,/Sin coincidencias/);
+});
+
+test('large or non-image team photos are rejected before decoding and preserve stored photos',()=>{
+ const c=fixture().context,messages=[];let writes=0;c.alert=message=>messages.push(message);c.localStorage.setItem=()=>writes++;
+ for(const file of [{type:'image/jpeg',size:11*1024*1024},{type:'text/plain',size:50}]){const input={files:[file],value:'selected'};c.savePartnerPhoto('cafe',1,input);assert.equal(input.value,'');}
+ assert.match(messages[0],/10 MB/);assert.match(messages[1],/imagen/);assert.equal(writes,0);
 });

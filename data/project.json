@@ -7,14 +7,13 @@
   },
   "project": {
     "name": "PBT Web 2.0",
-    "purpose": "Planeación y distribución operativa de partners con base en Product Mix, canales y el motor original PBT.24.",
+    "purpose": "Planeación operativa con porcentajes de los motores CSV y plays originales PBT.24.",
     "dataPolicy": "Las coordenadas, plays y rutinas se conservan fieles al archivo PBT.24Desbloqueado. Los cambios visuales no alteran el motor operativo."
   },
   "footer": {
-    "title": "Diseñado por Enrique César Flores",
+    "title": "Diseñado por Enrique César Flores & Jorge Antonio Alcantar Aguiar",
     "message": "PBT Web 2.0 es una herramienta interna desarrollada para apoyar la planeación operativa, la toma de decisiones y la mejora continua. Su contenido es de uso exclusivo de los equipos autorizados y no debe reproducirse, distribuirse ni difundirse fuera del ámbito de trabajo.",
     "hashtags": [
-      "#DistritoKike 🚀",
       "#GreenApronService",
       "JUNTÉMONOS MÁS"
     ]

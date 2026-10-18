@@ -46,3 +46,9 @@ test('an offline published copy keeps its saved reading date instead of reportin
  const pack=await makePack(),readAt='2026-10-17T08:00:00.000Z',network=publisher(pack),f=fixture(async url=>{const response=await network(url);response.headers.set('X-PBT-Offline','1');return response;},{pack,label:'data/motores/',kind:'repo',readAt});
  await f.start();assert.equal(f.stored.readAt,readAt);assert.match(f.node('motorReadAt').textContent,/recuperada/);assert.match(f.node('motorOrigin').textContent,/sin conexión/);
 });
+
+test('an old original-source preference restores only validated CSV and cannot resurrect sale data',async()=>{
+ const pack=await makePack(),f=fixture(publisher(pack),{original:true,pack,label:'Back',kind:'local',readAt:'2026-10-17T08:00:00.000Z'});
+ await f.start();assert.equal(f.context.PBT_WEEKLY.active,true);assert.equal(f.context.PBT_WEEKLY.ready,true);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').basis,'units');
+ await f.choose([csvFile('202602',120)]);assert.equal(f.stored.original,undefined);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').unidades,220);
+});

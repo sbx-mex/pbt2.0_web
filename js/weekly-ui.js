@@ -30,7 +30,7 @@
  window.pbtAuditHTML=()=>'';
  window.renderPBTAudit=function(tab,data){
   const box=$(tab+'_audit');if(!box)return;
-  if(data.basis!=='units'){box.textContent='La base original calcula sobre venta. Abre los motores CSV para consultar unidades y AA.';return;}
+  if(data.basis!=='units'||!data.units){box.textContent='Sin datos para este filtro.';return;}
   const n=value=>value==null?'No disponible':Number(value).toLocaleString('es-MX',{maximumFractionDigits:2}),total=data.unidades;
   const row=(name,value,aa)=>'<tr><td>'+esc(name)+'</td><td>'+n(value)+'</td><td>'+n(aa)+'</td></tr>';
   const table=(title,units,aa)=>'<h3>'+title+'</h3><table><thead><tr><th>Concepto</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+Object.entries(units).filter(([key])=>key!=='DT'||tab==='dt').map(([key,value])=>row(key==='Café filtrado'?'COD':key,value,aa?.[key])).join('')+row('Total',total,data.unidadesAA)+'</tbody></table>';
@@ -69,7 +69,7 @@
   }
   populateFilters();for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();
  }
- function status(message,isError=false){$('motorStatus').textContent=message;$('motorStatus').classList.toggle('motor-error',isError);$('motorPanel').classList.toggle('motor-has-error',isError);if(isError)$('motorOrigin').textContent=PBT_WEEKLY.active?'CSV activos · nueva lectura sin aplicar':(PBT_WEEKLY.ready?'Base original activa':'Motor CSV no disponible');}
+ function status(message,isError=false){$('motorStatus').textContent=message;$('motorStatus').classList.toggle('motor-error',isError);$('motorPanel').classList.toggle('motor-has-error',isError);if(isError)$('motorOrigin').textContent=PBT_WEEKLY.active?'CSV activos · nueva lectura sin aplicar':'Motor CSV no disponible';}
  function showFiles(pack,cached=false){
   $('motorFiles').innerHTML=pack.files.map(file=>'<li><span>'+esc(file.path)+'</span><small>'+esc(file.week.slice(0,4))+' · S'+esc(file.week.slice(4))+' · '+Number(file.rows).toLocaleString('es-MX')+' registros</small></li>').join('');
   $('motorFolderLabel').textContent=label;$('motorSummary').textContent=pack.weeks.length+' semanas · '+pack.stores.length+' tiendas · Unidades';$('motorOrigin').textContent=cached?'CSV activos · respaldo guardado':'CSV semanales activos';
@@ -88,8 +88,8 @@
    }catch(error){finish(error);}};
   });
  }
- async function persistSource(original=false){
-  const value={pack:lastPack,label,kind,handle,readAt:lastReadAt,original};
+ async function persistSource(){
+  const value={pack:lastPack,label,kind,handle,readAt:lastReadAt};
   try{await storage('put',value);return true;}catch{delete value.handle;try{await storage('put',value);return true;}catch{return false;}}
  }
  async function activate(pack,source,sourceKind,nextHandle=null,options={},operation){
@@ -103,7 +103,7 @@
   status(options.cached?'Respaldo validado. Relee la fuente para consultar cambios.':(pack.legacyAA?'Relee la carpeta para consultar AA por segmento.':(pack.files.every(file=>file.hasAA)?'Lectura completa. Unidades actuales y AA conciliadas.':'Lectura completa. AA no disponible en todas las semanas.')));
   if(options.persist!==false&&!await persistSource())status('Lectura completa. Respaldo local no disponible; vuelve a abrir la carpeta al recargar.');
  }
- function setBusy(value){busy=value;PBT_WEEKLY.loading=value;for(const id of ['openMotorFolder','reloadMotorFolder','useOriginalMotor','pickMotorCsv','retryMotor'])$(id).disabled=value;$('cancelMotorRead').hidden=!value||!cancelRead;for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();}
+ function setBusy(value){busy=value;PBT_WEEKLY.loading=value;for(const id of ['openMotorFolder','reloadMotorFolder','pickMotorCsv','retryMotor'])$(id).disabled=value;$('cancelMotorRead').hidden=!value||!cancelRead;for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();}
  async function loadRepository(operation){
   const result=await PBT_MOTOR_IO.loadRepository(fetch.bind(window),operation.signal);
   const identity=pack=>pack?.files?.map(file=>file.week+':'+file.sha256).sort().join('|'),readAt=identity(lastPack)===identity(result.pack)?lastReadAt:null;
@@ -117,7 +117,7 @@
   if(typeof Worker==='undefined')throw Error('Usa Chrome o Edge para abrir la carpeta, o Releer carpeta para usar el motor publicado.');
   if(operation.signal.aborted)throw new DOMException('Lectura cancelada','AbortError');
   let pack=await new Promise((resolve,reject)=>{
-   const worker=new Worker('js/weekly-worker.js?v=22');let finished=false;
+   const worker=new Worker('js/weekly-worker.js?v=23');let finished=false;
    function finish(error,value){if(finished)return;finished=true;operation.signal.removeEventListener('abort',aborted);worker.terminate();error?reject(error):resolve(value);}
    function aborted(){finish(new DOMException('Lectura cancelada','AbortError'));}operation.signal.addEventListener('abort',aborted,{once:true});
    worker.onmessage=event=>{if(event.data.progress)status('Leyendo '+event.data.progress);else if(event.data.error)finish(Error(event.data.error));else if(event.data.pack)finish(null,event.data.pack);};
@@ -153,16 +153,11 @@
    else await loadRepository(operation);
   });
  }
- async function original(){
-  if(busy)return;PBT_WEEKLY.active=false;PBT_WEEKLY.engine=null;PBT_WEEKLY.ready=true;PBT_WEEKLY.error=false;refreshViews();
-  $('motorOrigin').textContent='Base original activa';$('motorSummary').textContent='Porcentajes sobre venta · PBT original';$('motorFolderLabel').textContent='js/data.js';$('motorReadAt').textContent='';$('motorChanges').textContent='';$('motorFiles').innerHTML='';
-  status('Base original activa. CSV y venta se calculan por separado.');await persistSource(true);
- }
  document.addEventListener('DOMContentLoaded',async()=>{
-  $('directorySummary').textContent='Directorio: '+PBT_DIRECTORY.data.stores.length.toLocaleString('es-MX')+' cruces CeCo–Tienda, tomados de '+PBT_DIRECTORY.data.source+'.';
+  $('directorySummary').textContent='Busca por CeCo o tienda. El directorio aporta los nombres; los CSV determinan las tiendas disponibles.';
   $('aboutDialog').addEventListener('close',()=>{$('aboutButton').setAttribute('aria-expanded','false');$('aboutButton').focus();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('aboutDialog').hasAttribute('open'))closeAbout();});
-  $('openMotorFolder').addEventListener('click',openFolder);$('reloadMotorFolder').addEventListener('click',reload);$('retryMotor').addEventListener('click',()=>run(loadRepository));$('useOriginalMotor').addEventListener('click',original);
+  $('openMotorFolder').addEventListener('click',openFolder);$('reloadMotorFolder').addEventListener('click',reload);$('retryMotor').addEventListener('click',()=>run(loadRepository));
   $('pickMotorCsv').addEventListener('click',()=>$('motorFilesInput').click());$('cancelMotorRead').addEventListener('click',()=>cancelRead?.());
   for(const id of ['motorFolderInput','motorFilesInput'])$(id).addEventListener('change',event=>{
    const input=event.target,files=[...input.files].map(file=>({file,path:file.webkitRelativePath||file.name})),merge=kind==='local'&&(id==='motorFilesInput'||mergeFolderInput);mergeFolderInput=false;
@@ -170,7 +165,6 @@
   });
   setBusy(true);let saved;try{saved=await storage('get');}catch{}setBusy(false);
   if(saved?.kind==='repo'&&saved.pack){lastPack=saved.pack;lastReadAt=saved.readAt||null;}
-  if(saved?.original){if(saved.pack){lastPack=saved.pack;label=saved.label;kind=saved.kind;handle=saved.handle||null;lastReadAt=saved.readAt||null;}PBT_WEEKLY.loading=false;await original();return;}
   if(saved?.kind==='local'){
    try{await activate(saved.pack,saved.label,'local',saved.handle||null,{persist:false,cached:true,readAt:saved.readAt});}catch(error){status('No se pudo recuperar tu lectura: '+error.message,true);}
    if(PBT_WEEKLY.ready&&handle){await run(async operation=>{if(await handle.queryPermission({mode:'read'})==='granted')await readFiles(await enumerate(handle,operation.signal),handle.name,handle,true,operation);});}

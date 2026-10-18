@@ -1,6 +1,6 @@
 const CACHE_PREFIX='pbt2-web-'+encodeURIComponent(new URL(self.registration.scope).pathname)+'-';
-const CACHE_NAME=CACHE_PREFIX+'v22-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
-const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=22','./js/app.js?v=22','./js/store-directory.js?v=22','./js/weekly-core.js?v=22','./js/motor-loader.js?v=22','./js/weekly-ui.js?v=22','./js/weekly-worker.js?v=22','./js/print.js?v=22','./js/pdf-renderer.js?v=21','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE_NAME=CACHE_PREFIX+'v23-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
+const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=23','./js/app.js?v=23','./js/store-directory.js?v=23','./js/weekly-core.js?v=23','./js/motor-loader.js?v=23','./js/weekly-ui.js?v=23','./js/weekly-worker.js?v=23','./js/print.js?v=23','./js/sheet-template.js?v=23','./js/pdf-renderer.js?v=23','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json?v=23','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL_FILES)).then(()=>self.skipWaiting()));
 });
@@ -11,13 +11,13 @@ self.addEventListener('activate',event=>{
   const cache=await caches.open(key);
   for(const request of await cache.keys())if(request.url.startsWith(self.registration.scope))await cache.delete(request);
   if(!(await cache.keys()).length)await caches.delete(key);
- }))).then(()=>self.clients.claim()));
+ }))).then(async()=>{const cache=await caches.open(DATA_CACHE);for(const request of await cache.keys())if(/\/js\/data\.js$/.test(new URL(request.url).pathname))await cache.delete(request);}).then(()=>self.clients.claim()));
 });
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET')return;
  const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;
  const isIndex=/\/data\/motores\/(?:indice|manifest)\.json$/.test(url.pathname);
- const isEngine=/\/js\/(?:data|excel_data)\.js$/.test(url.pathname);
+ const isEngine=/\/js\/excel_data\.js$/.test(url.pathname);
  const isNavigation=event.request.mode==='navigate';
  if(isIndex||isNavigation){
   event.respondWith(caches.open(CACHE_NAME).then(async cache=>{
