@@ -1,6 +1,6 @@
 const CACHE_PREFIX='pbt2-web-'+encodeURIComponent(new URL(self.registration.scope).pathname)+'-';
-const CACHE_NAME=CACHE_PREFIX+'v19-shell',DATA_CACHE=CACHE_PREFIX+'v19-data';
-const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=19','./js/app.js?v=19','./js/weekly-core.js?v=19','./js/weekly-ui.js?v=19','./js/weekly-worker.js?v=19','./js/print.js?v=19','./data/project.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE_NAME=CACHE_PREFIX+'v20-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
+const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=20','./js/app.js?v=20','./js/weekly-core.js?v=20','./js/weekly-ui.js?v=20','./js/weekly-worker.js?v=20','./js/print.js?v=20','./js/pdf-renderer.js?v=20','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL_FILES)).then(()=>self.skipWaiting()));
 });

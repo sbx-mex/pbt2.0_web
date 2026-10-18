@@ -58,6 +58,17 @@ class WeeklyMotorTests(unittest.TestCase):
         path=self.folder/'bad.csv';path.write_text('a,b\n1,2\n')
         with self.assertRaisesRegex(MotorError,'columnas'):parse_motor(path)
 
+    def test_segmented_aa_and_dt_evidence(self):
+        path=self.folder/'a.csv';zero=ROW.copy();zero[4]='DT';zero[5]='Food';zero[7]='0';zero[8]='0'
+        write_csv(path,[ROW,zero]);parsed=parse_motor(path)
+        self.assertEqual(parsed['dt'],set());self.assertTrue(parsed['file']['hasAA'])
+        self.assertEqual(len(parsed['rows'][0]),23);self.assertEqual(parsed['rows'][0][14],80)
+        zero[8]='1';write_csv(path,[ROW,zero]);self.assertEqual(parse_motor(path)['dt'],{'38101'})
+
+    def test_missing_aa_is_explicitly_unavailable(self):
+        path=self.folder/'a.csv';row=ROW.copy();row[8]='';write_csv(path,[row])
+        self.assertFalse(parse_motor(path)['file']['hasAA'])
+
     def test_original_pbt_engine_is_byte_identical(self):
         self.assertEqual(hashlib.sha256((ROOT/'js/excel_data.js').read_bytes()).hexdigest(),'19a88dd281e180667ac7ff2561b7d8b371b746e777002942053e11eee28a6a77')
 
@@ -67,5 +78,6 @@ class WeeklyMotorTests(unittest.TestCase):
         self.assertAlmostEqual(sum(row[4] for row in pack['rows']),sum(meta['units'] for meta in pack['files']))
         for row in pack['rows']:
             self.assertAlmostEqual(row[4],sum(row[5:10]),places=4);self.assertAlmostEqual(row[4],sum(row[10:13]),places=4)
+            self.assertAlmostEqual(row[14],sum(row[15:20]),places=4);self.assertAlmostEqual(row[14],sum(row[20:23]),places=4)
 
 if __name__=='__main__':unittest.main()

@@ -1,0 +1,251 @@
+{
+  "version": "20",
+  "estado_local": "VERDE",
+  "fecha_UTC": "2026-10-18T07:15:34.013617+00:00",
+  "repositorio": "sbx-mex/pbt2.0_web",
+  "base_commit": "8c08b5a7db60ec83adcfd10b76affbd1d26fab96",
+  "alcance": "Actualización diferencial. Esta versión se entrega en ZIP; no se ha subido ni publicado.",
+  "baseline_GitHub": {
+    "commit": "8c08b5a7db60ec83adcfd10b76affbd1d26fab96",
+    "conclusion": "success",
+    "run_url": "https://github.com/sbx-mex/pbt2.0_web/actions/runs/39105018889",
+    "nota": "Corresponde a la versión previa; no acredita un despliegue de V20."
+  },
+  "pruebas": {
+    "python": 13,
+    "node": 19,
+    "total": 32,
+    "fallos": 0,
+    "verificacion": "Pruebas ejecutadas y conciliación de ambos lectores con los cinco CSV completos."
+  },
+  "porcentajes": {
+    "estado": "VERDE",
+    "csv": 5,
+    "registros_csv": 283251,
+    "casos_filtrados": 1296,
+    "selecciones_validas": 1296,
+    "selecciones_sin_base_positiva": 0,
+    "tiendas_DT_con_evidencia": 274,
+    "unidades_actuales": 31558524.0,
+    "unidades_AA": 31250662.0,
+    "porcentajes_por_unidades": true,
+    "cierre_a_100_con_decimas": true,
+    "desviacion_redondeo_menor_a_0_1_puntos": true
+  },
+  "proyecto": {
+    "estado": "VERDE",
+    "version": "20",
+    "motores": 5,
+    "semanas": [
+      "202601",
+      "202602",
+      "202603",
+      "202604",
+      "202605"
+    ],
+    "registros": 283251,
+    "unidades": 31558524.0,
+    "grupos": 28095,
+    "motor_original_sin_cambios": true,
+    "calendario_original_445": true,
+    "enlaces_locales": 10,
+    "formato_exportacion": "Carta vertical, margen 12.7 mm",
+    "indice_bytes": 2965968
+  },
+  "motor_original": {
+    "motor": {
+      "coordinates": {
+        "source": 60950,
+        "generated": 60950,
+        "missing": 0,
+        "extra": 0,
+        "rowOffset": 17,
+        "columnOffset": 1,
+        "visualStartCell": "B18",
+        "visualColumnWidths": [
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          9.08203125,
+          10.83203125
+        ],
+        "transformMismatches": 0
+      },
+      "routines": {
+        "source": 32368,
+        "generated": 32368,
+        "missing": 0,
+        "extra": 0
+      },
+      "plays": {
+        "cafe_plays": {
+          "source": 77840,
+          "generated": 77840,
+          "missing": 0,
+          "extra": 0
+        },
+        "dt_plays": {
+          "source": 381416,
+          "generated": 381416,
+          "missing": 0,
+          "extra": 0
+        }
+      },
+      "mixCandidates": {
+        "cafe_mixes": {
+          "source": 5560,
+          "generated": 5560,
+          "missing": 0,
+          "extra": 0
+        },
+        "dt_mixes": {
+          "source": 27244,
+          "generated": 27244,
+          "missing": 0,
+          "extra": 0
+        }
+      },
+      "channelProduction": {
+        "source": 3021,
+        "generated": 3021,
+        "missing": 0,
+        "extra": 0
+      }
+    },
+    "guia": {
+      "Cafe Layout": {
+        "mappedReferences": 267,
+        "uniqueReferences": 265,
+        "formulaReferences": 196,
+        "invalidReferences": 0,
+        "sourceDimensions": "46x17"
+      },
+      "Drive Thru Layout": {
+        "mappedReferences": 271,
+        "uniqueReferences": 269,
+        "formulaReferences": 198,
+        "invalidReferences": 0,
+        "sourceDimensions": "45x16"
+      }
+    },
+    "diferencias": 0
+  },
+  "interacciones": {
+    "estado": "VERDE",
+    "files": 5,
+    "manualContextPreserved": true,
+    "automaticContextUpdates": true,
+    "originalBaseRestored": true,
+    "letterSnapshots": true,
+    "monthMultiSelect": true,
+    "singleDayAndDaypart": true,
+    "autoRouteDT": true,
+    "currentAndAAinOptionalDetail": true,
+    "emptySelectionClearsLayout": true
+  },
+  "PDF": {
+    "estado": "VERDE",
+    "pdf": [
+      {
+        "layout": "cafe",
+        "pages": 1,
+        "Letter": true,
+        "margin_mm": 12.7,
+        "text_inside_margins": true
+      },
+      {
+        "layout": "dt",
+        "pages": 1,
+        "Letter": true,
+        "margin_mm": 12.7,
+        "text_inside_margins": true
+      }
+    ]
+  },
+  "referencia_consolidado": {
+    "archivo": "Reporte_Consolidado_Canal_Mix.xlsx",
+    "sha256": "ae64376c8aeaae73c938e8fb34ca58c93d47646258ddeaa59d0dfa8f0cc8428b",
+    "filas": 1090,
+    "selecciones_conciliadas": 144,
+    "caso_reproducido": {
+      "year": 2025,
+      "store": 38368,
+      "days": "Lun-Jue",
+      "daypart": "3_Tarde",
+      "total": 3178,
+      "channels": [
+        95.0,
+        5.0
+      ],
+      "mix": [
+        36.7,
+        2.8,
+        44.9,
+        11.7,
+        3.9
+      ]
+    }
+  },
+  "integridad": {
+    "excel_data_sha256": "19a88dd281e180667ac7ff2561b7d8b371b746e777002942053e11eee28a6a77",
+    "CSV_fuente_sin_modificar": true,
+    "porcentajes_de_ejemplo_solo_en_pruebas": true
+  },
+  "publicacion": {
+    "modo_predeterminado": "Conserva Pages desde la rama. Incluye índice actualizado.",
+    "validacion_CI": "Automática para push main y pull requests.",
+    "publicacion_Actions_opcional": "Requiere Pages Source GitHub Actions y variable PBT_DEPLOY_PAGES=true."
+  },
+  "limites": {
+    "dias_fuente": [
+      "Lun-Jue",
+      "Vie-Dom"
+    ],
+    "sin_separacion_domingo": true,
+    "AA_ausente": "No disponible, nunca cero inventado.",
+    "sin_base_positiva": "Sin porcentajes ni plan.",
+    "meses": "Calendario PBT 4-4-5, con año.",
+    "indice_max_bytes": 67108864
+  },
+  "instalacion_desde_ZIP": {
+    "estado": "VERDE",
+    "zip_aplicado_sobre_base_limpia": true,
+    "cache_resources": 14,
+    "checks": [
+      {
+        "command": "python scripts/build_weekly_motor.py",
+        "returncode": 0,
+        "seconds": 4.79
+      },
+      {
+        "command": "python -m unittest discover -s tests -v",
+        "returncode": 0,
+        "seconds": 4.92
+      },
+      {
+        "command": "node --test tests/pdf.test.cjs tests/weekly.test.cjs tests/service-worker.test.cjs",
+        "returncode": 0,
+        "seconds": 3.1
+      },
+      {
+        "command": "python scripts/audit_percentages.py",
+        "returncode": 0,
+        "seconds": 6.32
+      },
+      {
+        "command": "python scripts/audit_weekly_project.py",
+        "returncode": 0,
+        "seconds": 6.69
+      }
+    ]
+  }
+}

@@ -38,12 +38,14 @@ def audit(root: Path=ROOT) -> dict:
         function=html[start:html.index('function '+end+'(',start)]
         assert hashlib.sha256(function.encode()).hexdigest()==digest,'Se alteró la función original '+name
     assert "filterHTML(tab,'semana'" not in html and "filterHTML(tab,'q'" not in html,'Hay filtros de periodo adicionales al mes'
-    print_js=(root/'js/print.js').read_text()
-    assert 'size:Letter portrait;margin:0.5in' in print_js,'Falta formato carta con márgenes'
-    assert 'break-inside:avoid' in print_js and 'display:table-header-group' in print_js,'Falta paginación de rutinas'
+    renderer=(root/'js/pdf-renderer.js').read_text()
+    assert 'PAGE=[612,792],MARGIN=36' in renderer,'Falta carta de 612 × 792 pt con márgenes de 36 pt'
+    assert "['Fijo',31]" in renderer and 'tableHeader();' in renderer,'Falta estado Fijo o encabezado de rutinas'
+    assert (root/'js/vendor/pdf-lib.min.js').is_file() and (root/'js/vendor/pdf-lib.LICENSE').is_file(),'Falta el exportador local o su licencia'
+    assert 'multiple' not in re.search(r'<select id=".*?_manual_weekpart.*?</select>',(root/'js/weekly-ui.js').read_text()).group(0),'Los días deben ser selección única'
     pack=build(root/'data/motores')
     expected=serialize(pack);assert (root/'data/motores/indice.json').read_text()==expected,'Índice desactualizado'
-    assert len(expected.encode())<=32*1024*1024,'Divide el archivo histórico: el índice supera 32 MB'
+    assert len(expected.encode())<=64*1024*1024,'Divide el archivo histórico: el índice supera 64 MB'
     for path in [root/'sw.js',*list((root/'js').glob('*.js'))]:subprocess.run(['node','--check',str(path)],check=True,capture_output=True)
     # Inline scripts are still part of the original UI and must compile, too.
     for script in re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',html,re.S):
@@ -51,7 +53,7 @@ def audit(root: Path=ROOT) -> dict:
     workflow=(root/'.github/workflows/motores-semanales.yml').read_text()
     actions=re.findall(r'uses:\s*(\S+)',workflow)
     assert actions and all(re.fullmatch(r'[^@]+@[a-f0-9]{40}',action) for action in actions),'Falta fijar acciones a SHA'
-    return {'estado':'VERDE','version':'19','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode())}
+    return {'estado':'VERDE','version':'20','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode())}
 
 if __name__=='__main__':
     try:print(json.dumps(audit(),ensure_ascii=False,indent=2))

@@ -1,32 +1,39 @@
 (function(){
  'use strict';
- const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
- function snapshot(node){
-  const clone=node.cloneNode(true);
-  const originalSelects=[...node.querySelectorAll('select')];
-  [...clone.querySelectorAll('select')].forEach((control,index)=>{const original=originalSelects[index];control.replaceWith(document.createTextNode(original.selectedOptions?.[0]?.textContent||original.value||'Sin asignar'));});
-  for(const control of clone.querySelectorAll('input,button,script'))control.remove();
-  for(const element of [clone,...clone.querySelectorAll('*')])for(const attr of [...element.attributes])if(/^on/i.test(attr.name)||attr.name==='id')element.removeAttribute(attr.name);
-  return clone.innerHTML;
- }
- window.buildPBTLetter=function(tab){
-  if(!['cafe','dt'].includes(tab))throw Error('Selecciona CAFÉ o DRIVE THRU para exportar su plan.');
-  const result=valuesFromData(tab),data=result.raw;
-  if(!data.registros||(data.basis==='units'&&data.unidades<=0))throw Error('No hay datos para exportar con esta selección.');
+ const $=id=>document.getElementById(id);
+ window.PBT_EXPORT_BUSY=false;
+ let loading=null;
+ window.buildPBTSnapshot=function(tab){
+  if(!['cafe','dt'].includes(tab))throw Error('Selecciona CAFÉ o DRIVE THRU para exportar.');
+  const v=valuesFromData(tab),data=v.raw;
+  if(!data.registros||(data.basis==='units'&&!data.valid))throw Error(data.reason||'No hay datos válidos para exportar.');
   const current=state[tab],source=window.PBT_WEEKLY?.active?'CSV semanales · Unidades':'Base original · Venta';
-  const months=current.filters.mes.length?current.filters.mes.join(', '):getSourceList('Mes').join(', ');
-  const store=current.filters.tienda.join(', ')||'Todas las tiendas '+config[tab].title;
-  const context=(current.mode==='manual'?'Manual':'Automático')+' · '+current.filters.weekpart.join(', ')+' · '+current.filters.daypart.join(', ');
-  const contextText=[store,'Mes: '+months,context,source,data.weeks?.length?'Semanas: '+data.weeks.join(', '):''].filter(Boolean).map(esc).join('<br>');
-  const css=`@page{size:Letter portrait;margin:0.5in}*{box-sizing:border-box}body{margin:0;color:#173f33;font:10pt Arial,Helvetica,sans-serif}h1{font-size:20pt;margin:0 0 5pt}h2{font-size:13pt;margin:14pt 0 9pt}header{border-bottom:3pt solid #006241;padding-bottom:10pt}header p{font-size:9pt;line-height:1.5;margin:5pt 0}.print-tools{margin:12pt 0}button{background:#006241;color:#fff;border:0;padding:10pt 14pt;border-radius:6pt;cursor:pointer}.numbers{display:flex;gap:12pt;margin:12pt 0}.numbers>section{flex:1;min-width:0}.metric-grid{display:grid;gap:4pt;grid-template-columns:repeat(3,1fr)}.metric{padding:6pt 3pt;border:1px solid #b8cfc2;text-align:center;border-radius:5pt}.metric label{display:block;font-size:8pt;line-height:1.3}.metric span{display:block;font-size:12pt;font-weight:bold;margin-top:4pt}.layout{position:relative;height:3.7in;border:1pt solid #244d40;margin:26pt 0 12pt;break-inside:avoid}.area{position:absolute;border:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9pt;font-weight:bold}.gray{background:#aaa}.cbs{background:#cfe0f6}.pick{background:#ffc000}.hand{background:#d8ccff}.espresso{background:#9a856d}.pos{background:#c6e0b4}.food{background:#ffe699}.horno{background:#f4b183}.brew{background:#6f5445;color:#fff}.empty-zone{background:#eee}.partner-marker{flex-direction:column;line-height:1;z-index:5;font-size:10pt}.partner-marker.partner{background:#00754a;color:#fff;border:1px solid #006241}.partner-marker.support{background:white;color:#00754a;border:1px dashed #00754a}.partner-marker.unknown-marker{background:#f2f4f3;color:#52605a;border:1px dotted #6d7873}.marker-name{font-size:6pt;max-width:50pt;overflow-wrap:anywhere}.partner-photo-bubble{position:absolute;left:50%;top:-29pt;transform:translateX(-50%);width:33pt;height:33pt;border-radius:50%;border:2pt solid #00754a;background-size:cover;background-position:center}.partner-photo-bubble.empty{display:none}.routines{break-before:page}.partner-name-cell{display:flex;gap:5pt;align-items:center}.partner-letter{font-weight:bold}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #b8cfc2;padding:7pt;text-align:left;vertical-align:top;font-size:9pt;overflow-wrap:anywhere;line-height:1.45}th{background:#e2eee6}th:nth-child(1){width:22%}th:nth-child(2){width:25%}th:nth-child(3),td:nth-child(3){display:none}thead{display:table-header-group}tr{break-inside:avoid}.footer{font-size:8pt;line-height:1.5;border-top:1px solid #b8cfc2;padding-top:8pt;margin-top:14pt;color:#526b5f}.cell-tag,.excel-note,.marker-legend{display:none}img{max-width:100%}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.print-tools{display:none}}@media screen{body{max-width:7.5in;margin:24px auto;padding:12px}.routines{margin-top:32pt}}`;
-  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PBT '+esc(config[tab].title)+' · Carta</title><style>'+css+'</style></head><body><div class="print-tools"><button onclick="window.print()">Imprimir o guardar PDF · Carta</button></div><header><h1>PBT 2.0 · '+esc(config[tab].title)+'</h1><p>'+contextText+'</p><p>Partners: '+Number(current.partners)+' · Play PBT.24: '+esc(getPlay(tab,result.partners,result.channels,result.mix).play||'Sin play exacto')+'</p></header><div class="numbers"><section><h2>Canales</h2><div class="metric-grid">'+snapshot(document.getElementById(tab+'_channels'))+'</div></section><section><h2>Product Mix</h2><div class="metric-grid">'+snapshot(document.getElementById(tab+'_mix'))+'</div></section></div><h2>Distribución de partners</h2><div class="layout">'+snapshot(document.getElementById(tab+'_layout'))+'</div><p class="footer">CONFIDENCIAL · USO OPERATIVO INTERNO<br>Diseñado por Enrique César Flores · JUNTÉMONOS MÁS</p><section class="routines"><h2>Rutinas de partners · '+esc(config[tab].title)+'</h2><p>'+esc(store)+' · '+esc(context)+'</p><table><thead><tr><th>Partner</th><th>Estación</th><th>Fijo</th><th>Rutinas</th></tr></thead><tbody>'+snapshot(document.getElementById(tab+'_tbody'))+'</tbody></table><p class="footer">CONFIDENCIAL · USO OPERATIVO INTERNO · Diseñado por Enrique César Flores</p></section></body></html>';
+  const areas=[...$(tab+'_layout').querySelectorAll('.area')].map(node=>({
+   left:parseFloat(node.style.left),top:parseFloat(node.style.top),width:parseFloat(node.style.width),height:parseFloat(node.style.height),classes:[...node.classList],
+   marker:node.classList.contains('partner-marker'),text:node.textContent.trim(),letter:node.querySelector('.marker-letter')?.textContent||'',name:node.querySelector('.marker-name')?.textContent||'',
+   photo:node.querySelector('.partner-photo-bubble')?.style.backgroundImage?.match(/url\(["']?(data:image\/[^"')]+)["']?\)/)?.[1]||''
+  }));
+  const routines=[...$(tab+'_tbody').querySelectorAll('tr')].map(node=>{const cells=node.querySelectorAll('td'),select=cells[0].querySelector('select');return {partner:(cells[0].querySelector('.partner-letter')?.textContent||'')+(select?.value?' · '+select.value:''),station:cells[1].textContent,fixed:cells[2].textContent,routine:cells[3].textContent};});
+  return {title:config[tab].title,tab,partners:current.partners,store:current.filters.tienda.join(', ')||'Todas las tiendas '+config[tab].title,
+   months:current.filters.mes.length?current.filters.mes.join(', '):getSourceList('Mes').join(', '),days:pbtWeekLabel(current.filters.weekpart[0]),daypart:pbtDayLabel(current.filters.daypart[0]),mode:current.mode==='manual'?'Manual':'Automático',source,
+   weekText:data.weeks?.length?'Semanas: '+(data.weeks.length>8?data.weeks[0]+' a '+data.weeks.at(-1)+' ('+data.weeks.length+')':data.weeks.join(', ')):'',
+   channels:config[tab].channelLabels.map(([label,,key])=>[label,pctText(v.channels[key])]),mix:mixLabels.map(([label,,key])=>[label,pctText(v.mix[key])]),areas,routines};
  };
- window.exportPBTLetter=function(){
+ function script(src){return new Promise((resolve,reject)=>{const node=document.createElement('script');node.src=src;node.onload=resolve;node.onerror=()=>{node.remove();reject(Error('No se pudo cargar la exportación. Revisa la conexión y vuelve a intentar.'));};document.head.appendChild(node);});}
+ async function libraries(){
+  if(window.PDFLib&&window.PBT_PDF)return;
+  if(!loading)loading=(async()=>{if(!window.PDFLib)await script('js/vendor/pdf-lib.min.js?v=1.17.1');if(!window.PBT_PDF)await script('js/pdf-renderer.js?v=20');})().catch(error=>{loading=null;throw error;});
+  await loading;
+ }
+ window.exportPBTLetter=async function(){
+  if(window.PBT_EXPORT_BUSY)return;
+  const button=$('exportLetterButton'),original=button.textContent;
   try{
    applyOperationalContext(false);
-   const html=buildPBTLetter(activeTab),win=window.open('','_blank');
-   if(!win)throw Error('Permite la ventana de exportación para guardar el PDF en carta.');
-   win.opener=null;win.document.open();win.document.write(html);win.document.close();win.focus();
-  }catch(error){alert(error.message);}
+   const snapshot=buildPBTSnapshot(activeTab);window.PBT_EXPORT_BUSY=true;button.disabled=true;button.textContent='Preparando PDF…';
+   await libraries();const bytes=await PBT_PDF.create(snapshot,PDFLib),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),link=document.createElement('a');
+   link.href=url;link.download='PBT-'+snapshot.tab+'-'+new Date().toISOString().slice(0,10)+'.pdf';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(error){alert(error.message||'No se pudo generar el PDF.');}
+  finally{window.PBT_EXPORT_BUSY=false;button.textContent=original;if(['cafe','dt'].includes(activeTab))renderDataTab(activeTab);else button.disabled=true;}
  };
 })();

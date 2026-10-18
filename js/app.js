@@ -62,7 +62,7 @@
   function markReady(){
     var chip=document.getElementById('readyChip');
     var loader=document.getElementById('appLoading');
-    if(chip){chip.textContent='Motor PBT.24 listo';chip.classList.add('ready')}
+    if(chip){chip.textContent='Listo para planear';chip.classList.add('ready')}
     if(loader){loader.classList.add('hidden');setTimeout(function(){loader.remove()},260)}
     document.documentElement.setAttribute('data-app-ready','true');
   }

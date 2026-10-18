@@ -90,6 +90,7 @@ def parse_motor(path: Path) -> dict:
     seen = set()
     weeks = set()
     rows, units, units_aa, negatives = 0, Decimal(0), Decimal(0), 0
+    has_aa = 'Unidades AA' in reader.fieldnames
     for offset, row in enumerate(reader, header_line+2):
         if all(value in ('', None) for value in row.values()):
             continue
@@ -110,13 +111,17 @@ def parse_motor(path: Path) -> dict:
             raise MotorError(f'{path.name}:{offset}: registro duplicado en la misma semana')
         seen.add(key)
         amount, aa = number(row['Unidades']), number(row.get('Unidades AA', ''))
+        has_aa = has_aa and row.get('Unidades AA', '') != ''
         dim = (code, week, DAYPARTS[row['DayPart']], WEEKPARTS[row['Clas_Semana']])
-        target = groups.setdefault(dim, [*dim,*([Decimal(0)]*9),0])
+        target = groups.setdefault(dim, [*dim,*([Decimal(0)]*9),0,*([Decimal(0)]*9)])
         target[4] += amount
         target[MIX[row['Mix de Producto']]] += amount
         target[CHANNEL[row['Distribucion Canal']]] += amount
         target[13] += 1
-        if row['Distribucion Canal'] == 'DT':
+        target[14] += aa
+        target[MIX[row['Mix de Producto']]+10] += aa
+        target[CHANNEL[row['Distribucion Canal']]+10] += aa
+        if row['Distribucion Canal'] == 'DT' and (amount != 0 or aa != 0):
             stores_dt.add(code)
         rows += 1
         units += amount
@@ -126,7 +131,7 @@ def parse_motor(path: Path) -> dict:
             raise MotorError(f'{path.name}: excede 250,000 registros')
     if not rows:
         raise MotorError(f'{path.name}: sin registros')
-    return {'file':{'path':path.name, 'sha256':hashlib.sha256(data).hexdigest(), 'bytes':len(data), 'week':next(iter(weeks)), 'rows':rows, 'units':float(units), 'unitsAA':float(units_aa), 'negativeRows':negatives}, 'rows':list(groups.values()), 'dt':stores_dt}
+    return {'file':{'path':path.name, 'sha256':hashlib.sha256(data).hexdigest(), 'bytes':len(data), 'week':next(iter(weeks)), 'rows':rows, 'units':float(units), 'unitsAA':float(units_aa), 'hasAA':bool(has_aa), 'dtStores':sorted(stores_dt), 'negativeRows':negatives}, 'rows':list(groups.values()), 'dt':stores_dt}
 
 
 def build(folder: Path = FOLDER) -> dict:
@@ -150,7 +155,7 @@ def build(folder: Path = FOLDER) -> dict:
         dt.update(parsed['dt'])
     groups.sort(key=lambda row: row[:4])
     stores = sorted({row[0] for row in groups})
-    return {'schema':1, 'basis':'units', 'calendar':'PBT-445', 'files':records, 'duplicates':duplicates, 'weeks':[week_info(value) for value in sorted(week_files)], 'stores':[[code, 'DT' if code in dt else 'CAFE'] for code in stores], 'rows':[[float(value) if isinstance(value, Decimal) else value for value in row] for row in groups]}
+    return {'schema':2, 'basis':'units', 'calendar':'PBT-445', 'files':records, 'duplicates':duplicates, 'weeks':[week_info(value) for value in sorted(week_files)], 'stores':[[code, 'DT' if code in dt else 'CAFE'] for code in stores], 'rows':[[(int(value) if value == value.to_integral_value() else float(value)) if isinstance(value, Decimal) else value for value in row] for row in groups]}
 
 
 def serialize(pack: dict) -> str:
