@@ -89,7 +89,6 @@
   if(visible){buildEquipo();PBT_DEVICE.requestPersistence();el.querySelector('h2').focus({preventScroll:true});}
   else{$('teamButton').focus({preventScroll:true});$(activeTab+'_results').scrollIntoView({block:'start'});}
  };
- window.togglePlanZoom=function(tab){const wrap=$(tab+'_layout_wrap'),button=$(tab+'_zoom'),zoomed=wrap.classList.toggle('zoomed');button.setAttribute('aria-pressed',String(zoomed));button.textContent=zoomed?'Ajustar':'Ampliar';};
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')savePBTSession();});
  window.addEventListener('pagehide',()=>savePBTSession());
 })();
