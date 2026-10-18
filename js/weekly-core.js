@@ -134,15 +134,20 @@
   const stores=new Map(pack.stores),weeks=new Map(pack.weeks.map(info=>[info.id,info])),files=new Map(pack.files.map(file=>[file.week,file])),cache=new Map();
   const months=[...new Set(pack.weeks.map(info=>info.label))];
   const labels=type=>pack.stores.filter(item=>!type||item[1]===type).map(item=>'CeCo '+item[0]);
-  const current=new Map();for(const row of pack.rows){const value=current.get(row[0])||[0,0];value[0]+=row[4];value[1]+=row[12];current.set(row[0],value);}
-  const availableStores=type=>labels(type).filter(label=>{const value=current.get(label.slice(5));return value[0]>0&&(type!=='DT'||value[1]>0);});
+  const current=new Map(),byStore=new Map(),available=new Map();
+  for(const row of pack.rows){
+   const value=current.get(row[0])||[0,0];value[0]+=row[4];value[1]+=row[12];current.set(row[0],value);
+   const label='CeCo '+row[0];if(!byStore.has(label))byStore.set(label,[]);byStore.get(label).push(row);
+  }
+  const availableStores=type=>{if(!available.has(type))available.set(type,labels(type).filter(label=>{const value=current.get(label.slice(5));return value[0]>0&&(type!=='DT'||value[1]>0);}));return available.get(type).slice();};
   function calculate(filters={},type='CAFE'){
    if(!['CAFE','DT'].includes(type))throw Error('Tipo de tienda inválido');
    for(const field of ['Mes','DayPart','Weekpart','Semana','Tienda'])if(filters[field]!==undefined&&!Array.isArray(filters[field]))throw Error('Filtro inválido: '+field);
    for(const field of ['DayPart','Weekpart'])if(filters[field]?.length>1)throw Error(field+': elige una sola opción');
    const key=type+'|'+JSON.stringify(filters);if(cache.has(key))return cache.get(key);
    const sum=Array(19).fill(0),visible=new Set(),byWeek=new Map();
-   for(const row of pack.rows){
+   const selectedRows=filters.Tienda?.length===1?(byStore.get(filters.Tienda[0])||[]):pack.rows;
+   for(const row of selectedRows){
     if(stores.get(row[0])!==type)continue;
     if(filters.Mes?.length&&!filters.Mes.includes(weeks.get(row[1]).label))continue;
     if(filters.DayPart?.length&&!filters.DayPart.includes(row[2]))continue;

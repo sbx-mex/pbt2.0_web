@@ -1,6 +1,6 @@
 const CACHE_PREFIX='pbt2-web-'+encodeURIComponent(new URL(self.registration.scope).pathname)+'-';
-const CACHE_NAME=CACHE_PREFIX+'v25-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
-const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=25','./js/app.js?v=24','./js/store-directory.js?v=24','./js/weekly-core.js?v=24','./js/motor-loader.js?v=24','./js/device-store.js?v=24','./js/device-ui.js?v=25','./js/weekly-ui.js?v=24','./js/weekly-worker.js?v=24','./js/print.js?v=24','./js/sheet-template.js?v=24','./js/pdf-renderer.js?v=24','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json?v=24','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE_NAME=CACHE_PREFIX+'v26-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
+const SHELL_FILES=['./','./index.html','./js/plan-catalog.js?v=26','./manifest.json','./css/styles.css?v=25','./js/app.js?v=24','./js/store-directory.js?v=24','./js/weekly-core.js?v=26','./js/motor-loader.js?v=26','./js/device-store.js?v=24','./js/device-ui.js?v=25','./js/weekly-ui.js?v=26','./js/weekly-worker.js?v=26','./js/print.js?v=24','./js/sheet-template.js?v=24','./js/pdf-renderer.js?v=24','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json?v=24','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL_FILES)).then(()=>self.skipWaiting()));
 });

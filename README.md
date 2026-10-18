@@ -1,31 +1,30 @@
-# PBT Web 2.0 · V24
+# PBT Web 2.0 · V26
 
-Actualización sobre `b6c80054bd5df42542f8bfd68431b353638ff017` de `sbx-mex/pbt2.0_web`.
+Corrige el plan en blanco y acelera la consulta de motores sobre `34d372a8a577c4f2739d23aab177995be7952283` de `sbx-mex/pbt2.0_web`.
 
 ## Instalar
 
 Descomprime y reemplaza **sólo los archivos del ZIP en la raíz del repositorio**, conservando sus carpetas. No subas el ZIP cerrado ni una carpeta adicional. Mantén los CSV y los demás archivos existentes.
 
-El workflow ya configurado ejecuta `validar` y después `publicar`. Conserva **Settings → Pages → Source → GitHub Actions**. No se modifica el workflow ni la base original de plays, coordenadas o rutinas.
+Conserva **Settings → Pages → Source → GitHub Actions**. El workflow existente ejecuta `validar` antes de `publicar`. Python genera el catálogo compacto durante esa revisión; `js/plan-catalog.js` es un resultado de compilación y no se incluye en el ZIP ni se edita a mano. La publicación lo incorpora automáticamente si pasan los siete controles.
 
-## Diez mejoras
+## Cambios de carga
 
-1. **CeCo recordado.** Al recargar, se recupera la última sección y la tienda elegida en Café y en DT.
-2. **Filtros guardados.** Conserva meses, modo manual/automático, días, turno, cantidad de partners y Partner Tablet. En automático, días y turno siguen la hora actual.
-3. **Equipo por tienda.** Los nombres y asignaciones se guardan por CeCo, sin mezclarse al cambiar de tienda.
-4. **Fotos locales.** Se comprimen a 160 × 160 y se respaldan en IndexedDB. localStorage conserva una copia inmediata cuando hay espacio. No se suben a GitHub ni a un servidor.
-5. **Recuperación anterior.** Selecciona la tienda correcta, abre Equipo y pulsa **Recuperar equipo anterior**. Vincula el equipo previo de esa sección al CeCo elegido una sola vez; conserva las claves anteriores como respaldo. Sólo se ofrece si la tienda aún no tiene nombres.
-6. **Edición estable.** Cambiar el nombre conserva su foto y actualiza sus asignaciones. Adjuntar una foto actualiza su fila, sin reconstruir la lista ni perder la posición.
-7. **Tiendas correspondientes.** Café sólo lista CeCo Café con unidades actuales positivas. DT sólo lista CeCo DT con unidades actuales positivas en Drive Thru; AA por sí solo no habilita la tienda.
-8. **Plano móvil.** Altura explícita sin depender de `aspect-ratio`, campos legibles y botón **Ampliar / Ajustar** con desplazamiento dentro del plano. El botón **Ver plan** cierra Equipo sin borrar la selección.
-9. **PDF sin pie.** Se mantienen los recuadros, margen carta, nombre dinámico y contenidos originales. Se elimina el pie visible, incluidos créditos y numeración inferior. Los créditos de Acerca de permanecen.
-10. **Exportación en iOS.** Al terminar, muestra **PDF listo** con descarga y, cuando el navegador lo permite, **Guardar / compartir**. El segundo toque conserva el gesto que iOS requiere para compartir archivos. Mantiene el nombre dinámico y el plan abierto.
+- **Plan visible.** Se elimina la referencia al botón Ampliar retirado en V25: provocaba un error que detenía el renderizado.
+- **Catálogo de planes más ligero.** Python transforma el original de 23.9 MB en 6.4 MB y verifica sus 459,256 búsquedas. Conserva candidatos, planes, coordenadas, rutinas y desempates originales. El navegador ya no descarga `excel_data.js`.
+- **Consulta por CeCo.** El motor usa un índice por tienda para evitar recorrer todo el histórico en cada filtro. Los porcentajes, unidades y AA conservan sus resultados.
+- **Respaldo antes de la red.** Recupera el motor guardado y lo valida antes de mostrarlo; después comprueba si existe una actualización.
+- **Sólo descarga cuando hay cambios.** Consulta el manifiesto y reutiliza el índice verificado si coincide. Evita descargar otra vez los 15.5 MB del índice cuando no cambió.
+- **Actualización protegida.** Comprueba tamaño, SHA-256, semanas y relación entre índice y CSV. Una actualización inválida no reemplaza el plan activo.
+- **Menos trabajo repetido.** Reutiliza búsquedas de mezcla y elimina renderizados duplicados al elegir una tienda.
 
-## Alcance del guardado
+El primer acceso necesita descargar los motores. Una conexión lenta puede afectar esa primera descarga. Los accesos posteriores aprovechan el respaldo mientras esté disponible en el dispositivo. Los CSV siguen siendo la fuente de porcentajes; la base original conserva la selección de planes y su distribución.
 
-Se guarda en **este dispositivo, navegador y dirección del proyecto**. Otro navegador o la navegación privada usa otro espacio. Borrar los datos del sitio elimina el respaldo. La app solicita almacenamiento persistente cuando está disponible; el navegador decide si lo concede. Si no puede guardar, lo indica y conserva los datos en la sesión abierta. Política de Safari: https://webkit.org/blog/14403/updates-to-storage-policy/.
+## Equipo, móvil y PDF
 
-La primera apertura sigue vacía hasta elegir una tienda. Sólo las selecciones guardadas por el usuario se recuperan. La disponibilidad se vuelve a validar contra el motor al iniciar; un CeCo ausente no genera un plan. Los ajustes locales no cambian los CSV ni los porcentajes.
+Se mantienen las mejoras de V24/V25: equipo y fotos por CeCo, recuperación de filtros, selección de tiendas Café/DT según unidades, tabla adaptable, plan sin botón Ampliar y PDF sin pie de página. El PDF conserva los recuadros, margen carta y nombre dinámico. En iOS, **PDF listo** permite descargar y compartir cuando el navegador lo admite.
+
+El guardado corresponde a **este dispositivo, navegador y dirección del proyecto**. Borrar los datos del sitio elimina el respaldo. Si el navegador no permite guardarlo, la aplicación lo indica y conserva los datos durante la sesión. La primera apertura permanece vacía hasta elegir una tienda; sólo se recuperan selecciones guardadas que sigan disponibles en los motores.
 
 ## Revisión reproducible
 
@@ -35,6 +34,6 @@ Python 3.12 y Node 22. No requiere instalar paquetes para validar:
 python scripts/validate_update.py --site _site
 ```
 
-Usa una carpeta de salida nueva. Los seis controles deben aprobar antes de preparar la publicación. Pruebas de almacenamiento, separación Café/DT, UI, PDF, caché y auditoría independiente de porcentajes están incluidas.
+Usa una carpeta de salida nueva. Los siete controles generan el catálogo, reconstruyen los motores desde CSV, comprueban el directorio, ejecutan las pruebas Python/Node y auditan porcentajes y fidelidad al original. Sólo después preparan `_site` para publicar. Para abrir una copia local, sirve esa carpeta mediante HTTP.
 
-Los resultados de esta entrega corresponden a la revisión local; el estado remoto se confirma después de subir el ZIP y completar Actions.
+La equivalencia del catálogo se comprueba exhaustivamente. Las pruebas también cubren el control eliminado, recuperación del respaldo, actualización corrupta y reutilización del índice sin cambios. La validación visual de V26 se realizó en WebKit con emulación de iPhone y anchos de 320, 390, 980 y 1280 px; no sustituye una prueba en dispositivos físicos Android/iOS.

@@ -35,3 +35,18 @@ test('cancellation ends immediately and ignores a late file or fetch result',asy
  const source=published(await pack()),aborted=new AbortController();aborted.abort();await assert.rejects(()=>io.loadRepository(source.fetch,aborted.signal),{name:'AbortError'});
 });
 module.exports={pack,published};
+
+test('a verified unchanged repository needs only its manifest and retains the same pack',async()=>{
+ const source=published(await pack()),first=await io.loadRepository(source.fetch),calls=[];
+ const next=await io.loadRepository(async url=>{calls.push(url);return source.fetch(url);},undefined,first);
+ assert.deepEqual(calls,['data/motores/manifest.json']);assert.equal(next.pack,first.pack);assert.equal(next.unchanged,true);
+ const restored=await io.restoreRepository({text:first.text,manifest:first.manifest});
+ assert.equal((await io.loadRepository(source.fetch,undefined,restored)).pack,restored.pack);
+});
+test('changed manifests download again, while corrupted or unverified backups cannot bypass SHA checks',async()=>{
+ const source=published(await pack()),old=await io.loadRepository(source.fetch),updated=published(await pack('202601',150)),calls=[];
+ const next=await io.loadRepository(async url=>{calls.push(url);return updated.fetch(url);},undefined,old);
+ assert.equal(calls.length,2);assert.equal(next.pack.files[0].units,150);assert.equal(old.pack.files[0].units,100);
+ await assert.rejects(()=>io.restoreRepository({text:old.text.replace('100','101'),manifest:old.manifest}),/no coinciden/);
+ const untrusted={...old},reads=[];await io.loadRepository(async url=>{reads.push(url);return source.fetch(url);},undefined,untrusted);assert.equal(reads.length,2);
+});

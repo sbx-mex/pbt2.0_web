@@ -1,7 +1,7 @@
 (function(){
  'use strict';
  const $=id=>document.getElementById(id);
- let handle=null,lastPack=null,kind='repo',label='data/motores/',busy=false,cancelRead=null,lastReadAt=null,mergeFolderInput=false;
+ let handle=null,lastPack=null,lastRepository=null,kind='repo',label='data/motores/',busy=false,cancelRead=null,lastReadAt=null,mergeFolderInput=false;
  window.PBT_WEEKLY={active:false,engine:null,ready:false,loading:true,error:false};
  const esc=value=>String(value||'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
@@ -67,7 +67,7 @@
    const code=previous&&PBT_DIRECTORY.codeOf(previous),matching=previous&&(stores.includes(previous)?previous:(code?stores.find(value=>PBT_DIRECTORY.codeOf(value)===code):null));
    state[tab].filters.tienda=matching?[matching]:[];$(tab+'_tienda_search').value=matching?pbtStoreLabel(matching):'';closeStoreResults(tab);closeMS(tab,'mes',false);
   }
-  populateFilters();applyOperationalContext(true);for(const tab of ['cafe','dt'])renderDataTab(tab);if(!$('equipo').hidden&&window.buildEquipo)buildEquipo();notifySource();
+  populateFilters();applyOperationalContext(true);if(!$('equipo').hidden&&window.buildEquipo)buildEquipo();notifySource();
  }
  function status(message,isError=false){$('motorStatus').textContent=message;$('motorStatus').classList.toggle('motor-error',isError);$('motorPanel').classList.toggle('motor-has-error',isError);if(isError)$('motorOrigin').textContent=PBT_WEEKLY.active?'CSV activos · nueva lectura sin aplicar':'Motor CSV no disponible';}
  function showFiles(pack,cached=false){
@@ -89,7 +89,7 @@
   });
  }
  async function persistSource(){
-  const value={pack:lastPack,label,kind,handle,readAt:lastReadAt};
+  const value={label,kind,handle,readAt:lastReadAt,...(kind==='repo'&&lastRepository?{repository:{text:lastRepository.text,manifest:lastRepository.manifest}}:{pack:lastPack})};
   try{await storage('put',value);return true;}catch{delete value.handle;try{await storage('put',value);return true;}catch{return false;}}
  }
  async function activate(pack,source,sourceKind,nextHandle=null,options={},operation){
@@ -98,6 +98,7 @@
   if(operation?.signal.aborted)throw new DOMException('Lectura cancelada','AbortError');
   if(operation){operation.committed=true;$('cancelMotorRead').hidden=true;}
   PBT_WEEKLY.engine=engine;PBT_WEEKLY.active=true;PBT_WEEKLY.ready=true;PBT_WEEKLY.error=false;lastPack=pack;kind=sourceKind;label=source;handle=nextHandle;
+  lastRepository=sourceKind==='repo'?(options.repository||null):null;
   lastReadAt=options.readAt&&Number.isFinite(Date.parse(options.readAt))?options.readAt:(options.cached?null:new Date().toISOString());
   refreshViews();showFiles(pack,!!options.cached);$('motorChanges').textContent=options.changes?options.changes.added+' nuevas · '+options.changes.updated+' actualizadas · '+options.changes.retained+' conservadas':'';
   status(options.cached?'Respaldo validado. Relee la fuente para consultar cambios.':(pack.legacyAA?'Relee la carpeta para consultar AA por segmento.':(pack.files.every(file=>file.hasAA)?'Lectura completa. Unidades actuales y AA conciliadas.':'Lectura completa. AA no disponible en todas las semanas.')));
@@ -105,9 +106,14 @@
  }
  function setBusy(value){busy=value;PBT_WEEKLY.loading=value;for(const id of ['openMotorFolder','reloadMotorFolder','pickMotorCsv','retryMotor'])$(id).disabled=value;$('cancelMotorRead').hidden=!value||!cancelRead;for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();}
  async function loadRepository(operation){
-  const result=await PBT_MOTOR_IO.loadRepository(fetch.bind(window),operation.signal);
+  const result=await PBT_MOTOR_IO.loadRepository(fetch.bind(window),operation.signal,lastRepository);
+  if(result.unchanged&&kind==='repo'&&PBT_WEEKLY.ready&&result.pack===lastPack){
+   if(operation.signal.aborted)throw new DOMException('Lectura cancelada','AbortError');
+   lastRepository=result;showFiles(lastPack,result.offline);status(result.offline?'Sin conexión. Se usa el último motor validado.':'Motores al día.');
+   if(result.offline)$('motorOrigin').textContent='CSV activos · respaldo sin conexión';return;
+  }
   const identity=pack=>pack?.files?.map(file=>file.week+':'+file.sha256).sort().join('|'),readAt=identity(lastPack)===identity(result.pack)?lastReadAt:null;
-  await activate(result.pack,'data/motores/','repo',null,result.offline?{cached:true,readAt}:{},operation);
+  await activate(result.pack,'data/motores/','repo',null,{repository:result,...(result.offline?{cached:true,readAt}:{})},operation);
   if(result.offline){status('Sin conexión. Se usa el último motor validado; pulsa Releer carpeta al reconectar.');$('motorOrigin').textContent='CSV activos · respaldo sin conexión';}
  }
  async function readFiles(files,source,nextHandle,merge,operation){
@@ -117,7 +123,7 @@
   if(typeof Worker==='undefined')throw Error('Este navegador no permite leer archivos locales. Usa Releer carpeta para cargar los motores publicados.');
   if(operation.signal.aborted)throw new DOMException('Lectura cancelada','AbortError');
   let pack=await new Promise((resolve,reject)=>{
-   const worker=new Worker('js/weekly-worker.js?v=24');let finished=false;
+   const worker=new Worker('js/weekly-worker.js?v=26');let finished=false;
    function finish(error,value){if(finished)return;finished=true;operation.signal.removeEventListener('abort',aborted);worker.terminate();error?reject(error):resolve(value);}
    function aborted(){finish(new DOMException('Lectura cancelada','AbortError'));}operation.signal.addEventListener('abort',aborted,{once:true});
    worker.onmessage=event=>{if(event.data.progress)status('Leyendo '+event.data.progress);else if(event.data.error)finish(Error(event.data.error));else if(event.data.pack)finish(null,event.data.pack);};
@@ -163,16 +169,22 @@
    const input=event.target,files=[...input.files].map(file=>({file,path:file.webkitRelativePath||file.name})),merge=kind==='local'&&(id==='motorFilesInput'||mergeFolderInput);mergeFolderInput=false;
    if(files.length)run(operation=>readFiles(files,files[0].file.webkitRelativePath?.split('/')[0]||'CSV seleccionados',null,merge,operation));input.value='';
   });
+  const savedReading=storage('get').catch(()=>null);
   if(window.PBT_DEVICE){await PBT_DEVICE.ready;if(window.restorePBTSession)restorePBTSession();}
-  setBusy(true);let saved;try{saved=await storage('get');}catch{}setBusy(false);
-  if(saved?.kind==='repo'&&saved.pack){lastPack=saved.pack;lastReadAt=saved.readAt||null;}
+  setBusy(true);const saved=await savedReading;setBusy(false);
   if(saved?.kind==='local'){
    try{await activate(saved.pack,saved.label,'local',saved.handle||null,{persist:false,cached:true,readAt:saved.readAt});}catch(error){status('No se pudo recuperar tu lectura: '+error.message,true);}
    if(PBT_WEEKLY.ready&&handle){await run(async operation=>{if(await handle.queryPermission({mode:'read'})==='granted')await readFiles(await enumerate(handle,operation.signal),handle.name,handle,true,operation);});}
    else if(!PBT_WEEKLY.ready)await run(loadRepository);
-  }else await run(async operation=>{
-   try{await loadRepository(operation);}catch(error){if(operation.signal.aborted)throw error;if(saved?.pack){await activate(saved.pack,saved.label,'repo',null,{persist:false,cached:true,readAt:saved.readAt},operation);status('No se pudo actualizar: '+error.message+' Se conserva el respaldo validado.',true);}else throw error;}
-  });
+  }else{
+   if(saved?.repository||saved?.pack){
+    try{
+     const repository=saved.repository?await PBT_MOTOR_IO.restoreRepository(saved.repository):null;
+     await activate(repository?repository.pack:saved.pack,saved.label||'data/motores/','repo',null,{repository,persist:false,cached:true,readAt:saved.readAt});
+    }catch(error){status('No se pudo recuperar el respaldo. Se leerán los motores publicados.',true);}
+   }
+   await run(loadRepository);
+  }
   PBT_WEEKLY.loading=false;for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();
  });
 })();

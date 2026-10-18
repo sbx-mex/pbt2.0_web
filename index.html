@@ -15,12 +15,13 @@
 <meta name="application-name" content="PBT Web 2.0">
 <meta name="description" content="Herramienta interna para consultar el play PBT.24 según Product Mix, canales y contexto operativo.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+<script src="js/plan-catalog.js?v=26" defer></script>
 <script src="js/store-directory.js?v=24" defer></script>
-<script src="js/weekly-core.js?v=24" defer></script>
-<script src="js/motor-loader.js?v=24" defer></script>
+<script src="js/weekly-core.js?v=26" defer></script>
+<script src="js/motor-loader.js?v=26" defer></script>
 <script src="js/device-store.js?v=24" defer></script>
 <script src="js/device-ui.js?v=25" defer></script>
-<script src="js/weekly-ui.js?v=24" defer></script>
+<script src="js/weekly-ui.js?v=26" defer></script>
 <script src="js/print.js?v=24" defer></script>
 <script src="js/app.js?v=24" defer></script>
 <style>
@@ -61,9 +62,9 @@ details table th:nth-child(3),details table td:nth-child(3){display:none}
 <section><h3>Guardado en este dispositivo</h3><p>La tienda, filtros, equipo y fotos se guardan por CeCo en este navegador. Las fotos no se envían a un servidor. En Equipo puedes recuperar los nombres y fotos de la versión anterior y vincularlos a la tienda elegida. Borrar los datos del sitio elimina este respaldo; la navegación privada y otro navegador usan un almacenamiento distinto.</p></section><section class="about-audit"><h3>Validación de la tienda</h3><p id="aboutContext">Elige una tienda en Café o DT para consultar sus unidades.</p><div id="cafe_audit_section" hidden><div class="audit-totals"><span id="cafe_channelTotal"></span><span id="cafe_mixTotal"></span></div><div class="audit-body" id="cafe_audit"></div></div><div id="dt_audit_section" hidden><div class="audit-totals"><span id="dt_channelTotal"></span><span id="dt_mixTotal"></span></div><div class="audit-body" id="dt_audit"></div></div></section><section><h3>Exportación</h3><p>Carta con márgenes de 12.7 mm. Período, comentarios, porcentajes, plano y rutinas conservan el acomodo del PBT. El nombre del PDF usa CeCo, días, turno y partners.</p></section><footer class="app-footer" id="appFooter">
   <div class="footer-inner"><strong data-footer-title>Diseñado por Enrique César Flores & Jorge Antonio Alcantar Aguiar</strong><p data-footer-message>PBT Web 2.0 es una herramienta interna desarrollada para apoyar la planeación operativa, la toma de decisiones y la mejora continua. Su contenido es de uso exclusivo de los equipos autorizados y no debe reproducirse, distribuirse ni difundirse fuera del ámbito de trabajo.</p><div class="footer-tags"><span>#GreenApronService</span><span data-campaign-full>JUNTÉMONOS MÁS</span></div></div>
 </footer></div></dialog>
-<script src="js/sheet-template.js?v=24"></script><script src="js/excel_data.js?v=20"></script>
+<script src="js/sheet-template.js?v=24"></script>
 <script>
-var MAPS={cafe:null,dt:null},activeTab='cafe';
+var MAPS={cafe:null,dt:null},NEAREST={cafe:new Map(),dt:new Map()},activeTab='cafe';
 var state={cafe:{mode:'auto',filters:{q:[],daypart:[],mes:[],semana:[],weekpart:[],tienda:[]},partners:4},dt:{mode:'auto',filters:{q:[],daypart:[],mes:[],semana:[],weekpart:[],tienda:[]},partners:11,partnerTablet:'No'}};
 var config={cafe:{title:'CAFE',maxPartners:11,tipoEngine:'CAFE',channelLabels:[['Lobby','G14','lobby'],['Pick up & Delivery','H14','mop']]},dt:{title:'DRIVE THRU',maxPartners:13,tipoEngine:'DT',channelLabels:[['Lobby','G14','lobby'],['Pick up & Delivery','H14','mop'],['DT','I14','dt']]}};
 var mixLabels=[['Espresso','K14','esp'],['COD','L14','brew'],['CBS','K15','cbs'],['Food','L15','food'],['Otro','K16','other']];
@@ -81,8 +82,8 @@ function getSourceList(name){
  if(name==='TiendaDT')return (PBT_WEEKLY.engine.availableStores||PBT_WEEKLY.engine.stores)('DT');return [];
 }
 function buildPlayMap(tab){if(MAPS[tab])return MAPS[tab];var entries=(tab==='cafe'?EXCEL_DATA.cafePlayEntries:EXCEL_DATA.dtPlayEntries)||[],m={};for(var i=0;i<entries.length;i++)m[entries[i][0]]=entries[i][1];MAPS[tab]=m;return m}
-function dist(a,b){var s=0;for(var i=0;i<8;i++){var d=(a[i]||0)-(b[i]||0);s+=d*d}return s}function nearestMix(tab,vals){var arr=(tab==='cafe'?EXCEL_DATA.cafeCandidates:EXCEL_DATA.dtCandidates)||[],best=arr[0]||[0,0,0,0,0,0,0,0],bd=Infinity;for(var i=0;i<arr.length;i++){var d=dist(arr[i],vals);if(d<bd){bd=d;best=arr[i];if(d===0)break}}return best}
-function getPlay(tab,partners,channels,mix){var vals=tab==='cafe'?[channels.lobby,channels.mop,0,mix.esp,mix.brew,mix.cbs,mix.food,mix.other]:[channels.lobby,channels.mop,channels.dt,mix.esp,mix.brew,mix.cbs,mix.food,mix.other];var nearest=nearestMix(tab,vals.map?vals.map(round0):vals);var key=[round0(partners)].concat(nearest).join(',');var play=buildPlayMap(tab)[key];return{play:play,nearest:nearest,key:key}}
+function dist(a,b){var s=0;for(var i=0;i<8;i++){var d=(a[i]||0)-(b[i]||0);s+=d*d}return s}function nearestMix(tab,vals){var key=vals.join(','),cache=NEAREST[tab];if(cache.has(key))return cache.get(key);var arr=(tab==='cafe'?EXCEL_DATA.cafeCandidates:EXCEL_DATA.dtCandidates)||[],best=arr[0]||[0,0,0,0,0,0,0,0],bd=Infinity;for(var i=0;i<arr.length;i++){var d=dist(arr[i],vals);if(d<bd){bd=d;best=arr[i];if(d===0)break}}cache.set(key,best);if(cache.size>120)cache.delete(cache.keys().next().value);return best}
+function getPlay(tab,partners,channels,mix){var vals=tab==='cafe'?[channels.lobby,channels.mop,0,mix.esp,mix.brew,mix.cbs,mix.food,mix.other]:[channels.lobby,channels.mop,channels.dt,mix.esp,mix.brew,mix.cbs,mix.food,mix.other];var nearest=nearestMix(tab,vals.map?vals.map(round0):vals);var key=[round0(partners)].concat(nearest).join(',');var play=EXCEL_DATA.lookupPlay?EXCEL_DATA.lookupPlay(tab,round0(partners),nearest):buildPlayMap(tab)[key];return{play:play,nearest:nearest,key:key}}
 function cellPos(row,col,rowspan,colspan){row=Number(row);col=Number(col);rowspan=Number(rowspan||1);colspan=Number(colspan||1);var startRow=18,rows=10,startCol=2,widths=[9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,9.08203125,10.83203125],total=0,leftWidth=0,blockWidth=0;for(var i=0;i<widths.length;i++){total+=widths[i];if(i<col-startCol)leftWidth+=widths[i];if(i>=col-startCol&&i<col-startCol+colspan)blockWidth+=widths[i]}return{left:leftWidth/total*100,top:(row-startRow)/rows*100,width:blockWidth/total*100,height:rowspan/rows*100}}
 function block(cls,row,col,rowspan,colspan,text){var p=cellPos(row,col,rowspan,colspan);return '<div class="area '+cls+'" style="left:'+p.left+'%;top:'+p.top+'%;width:'+p.width+'%;height:'+p.height+'%">'+text+'</div>'}
 function staticLayout(tab){
@@ -197,7 +198,7 @@ function selectStore(tab,name){
  if(window.restoreStorePlan)restoreStorePlan(tab);
  document.getElementById(tab+'_tienda_search').value=pbtStoreLabel(name);closeStoreResults(tab);
  fillMS(tab,'mes',getSourceList('Mes'));applyOperationalContext(false);showTab(tab,true);
- if(window.savePBTContext)savePBTContext();renderDataTab(tab);
+ if(window.savePBTContext)savePBTContext();
  var input=document.getElementById(tab+'_tienda_search');if(input.blur)input.blur();
 }
 function clearStore(tab){state[tab].filters.tienda=[];var input=document.getElementById(tab+'_tienda_search');if(input)input.value='';closeStoreResults(tab);renderDataTab(tab);if(input&&input.focus)input.focus()}
@@ -225,7 +226,7 @@ function renderDataTab(tab){
  var selected=state[tab].filters.tienda.length===1,controls=document.getElementById(tab+'_controls'),results=document.getElementById(tab+'_results'),button=document.getElementById(tab+'_export'),input=document.getElementById(tab+'_tienda_search'),error=document.getElementById(tab+'_store_error');
  if(!controls||!results)return;if(window.savePBTSession)savePBTSession();if(window.saveStorePlan)saveStorePlan(tab);if(tab===activeTab){document.getElementById('teamButton').disabled=!selected;if(!selected){document.getElementById('equipo').hidden=true;document.getElementById('teamButton').setAttribute('aria-expanded','false');}}input.disabled=!!(window.PBT_WEEKLY&&!PBT_WEEKLY.ready);input.placeholder=input.disabled?(PBT_WEEKLY.loading?'Cargando…':'Revisar motor'):'CeCo o tienda';input.setAttribute('aria-busy',String(input.disabled&&!!PBT_WEEKLY.loading));controls.hidden=!selected;results.hidden=!selected;error.textContent='';
  if(!selected){document.getElementById(tab+'_layout').innerHTML='';document.getElementById(tab+'_tbody').innerHTML='';document.getElementById(tab+'_channels').innerHTML='';document.getElementById(tab+'_mix').innerHTML='';button.disabled=true;setTotals(tab,{lobby:null,mop:null,dt:null},{esp:null,brew:null,cbs:null,food:null,other:null});if(window.updateAboutContext)updateAboutContext();return;}
- var c=config[tab],v=valuesFromData(tab),valid=!!v.raw.registros&&v.raw.valid===true;document.getElementById(tab+'_zoom').disabled=!valid;button.disabled=!valid||!!window.PBT_EXPORT_BUSY;
+ var c=config[tab],v=valuesFromData(tab),valid=!!v.raw.registros&&v.raw.valid===true;button.disabled=!valid||!!window.PBT_EXPORT_BUSY;
  var ch='',mx='';c.channelLabels.forEach(function(x){ch+='<div class="metric"><label>'+x[0]+'</label><span>'+pctText(v.channels[x[2]])+'</span></div>'});mixLabels.forEach(function(y){mx+='<div class="metric"><label>'+y[0]+'</label><span>'+pctText(v.mix[y[2]])+'</span></div>'});
  document.getElementById(tab+'_channels').innerHTML=ch;document.getElementById(tab+'_mix').innerHTML=mx;setTotals(tab,v.channels,v.mix);renderPBTAudit(tab,v.raw);
  if(!valid){var reason=v.raw.reason||'Sin datos para este filtro.';document.getElementById(tab+'_layout').innerHTML='<div class="empty-motor">'+escHtml(reason)+'</div>';document.getElementById(tab+'_tbody').innerHTML='';}
@@ -241,7 +242,7 @@ function initPBT(){if(typeof EXCEL_DATA==='undefined'||typeof PBT_DIRECTORY==='u
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPBT);else initPBT();
 </script>
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js?v=25').then(function(reg){if(reg&&reg.update)reg.update().catch(function(){/* Keep the installed version if the network is unavailable. */});console.log('PBT Web 2.0 v25 listo',reg.scope)}).catch(function(err){console.log('No se pudo registrar sw.js',err)})})}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js?v=26').then(function(reg){if(reg&&reg.update)reg.update().catch(function(){/* Keep the installed version if the network is unavailable. */});console.log('PBT Web 2.0 v26 listo',reg.scope)}).catch(function(err){console.log('No se pudo registrar sw.js',err)})})}
 </script>
 </body>
 </html>

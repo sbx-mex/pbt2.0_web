@@ -1,5 +1,5 @@
 'use strict';
-importScripts('./weekly-core.js?v=24');
+importScripts('./weekly-core.js?v=26');
 self.onmessage=async function(event){
  try{
   const files=event.data.files;

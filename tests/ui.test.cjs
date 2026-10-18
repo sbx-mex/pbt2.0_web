@@ -21,6 +21,15 @@ test('selecting a store passes its exact key and returning to a tab preserves th
  assert.equal(f.filters.Tienda[0],'CeCo 38333');assert.equal(f.node('cafe_results').hidden,false);assert.match(f.node('cafe_mix').innerHTML,/36%/);assert.doesNotMatch(f.node('cafe_mix').innerHTML,/\.\d%/);
  const before=f.calls;c.showTab('dt');c.showTab('cafe');assert.equal(c.state.cafe.filters.tienda[0],'CeCo 38333');assert.equal(f.node('cafe_results').hidden,false);assert.ok(f.calls>before);
 });
+test('selecting Cafe or DT renders percentages and a plan when removed controls do not exist',()=>{
+ const f=fixture(),c=f.context;const missing=[];
+ c.document.getElementById=id=>{if(id.endsWith('_zoom')){missing.push(id);return null;}return f.node(id);};
+ let layouts=0,routines=0;c.renderLayout=()=>layouts++;c.renderRoutines=()=>routines++;
+ for(const [tab,store] of [['cafe','CeCo 38333'],['dt','CeCo 38134']]){
+  c.selectStore(tab,store);assert.equal(f.node(tab+'_results').hidden,false);assert.match(f.node(tab+'_mix').innerHTML,/36%/);assert.equal(f.node(tab+'_export').disabled,false);
+ }
+ assert.deepEqual(missing,[]);assert.ok(layouts>=2);assert.equal(layouts,routines);
+});
 test('PDF snapshots contain names only when selected and retain the CeCo for naming',()=>{
  const f=fixture(),c=f.context;c.state.cafe.filters.tienda=['CeCo 38333'];c.state.cafe.filters.weekpart=['Weekday'];c.state.cafe.filters.daypart=['Morning'];
  let name='Seleccionar';const first={querySelector:selector=>selector==='select'?{value:name}:{textContent:'A'}};

@@ -10,9 +10,11 @@ import subprocess
 try:
     from .build_weekly_motor import ROOT, build, serialize, week_info, manifest_for
     from .build_store_directory import read_compiled
+    from .build_plan_catalog import check as check_plan_catalog
 except ImportError:
     from build_weekly_motor import ROOT, build, serialize, week_info, manifest_for
     from build_store_directory import read_compiled
+    from build_plan_catalog import check as check_plan_catalog
 
 class Links(HTMLParser):
     def __init__(self):super().__init__();self.paths=[];self.ids=[]
@@ -38,7 +40,11 @@ def audit(root: Path=ROOT) -> dict:
     assert 'useOriginalMotor' not in html,'La fuente anterior ya no debe estar disponible'
     assert hashlib.sha256((root/'js/sheet-template.js').read_bytes()).hexdigest()=='6981029cf36b0ead69bb182f982b42bacfb43adfaa812f8878d23898fde5ffef','La plantilla extraída del Excel cambió'
     assert 'Number(x[1])+17' in html and 'Number(x[2])+1' in html,'Se alteró la transformación de coordenadas'
-    originals=[('getPlay','cellPos','c12912e9eb450b68309b744105338c87726df1420c4ed4500d36c5153dae8b22'),('cellPos','block','8822912cb88f80d4fe88bcc262b867827ec741311475e9ffa278c2d0669eb04a'),('layoutMarkers','renderLayout','934f88dc8f3ef9590ca200e78623af92dfc397af5a703f348449a78bcfdd2a9c'),('renderRoutines','setTotals','5b160b40b92010629c1013ebe70fb3c07711f75d172ebefb585fbff627769601')]
+    # La búsqueda compacta conserva las 459,256 entradas del original (prueba exhaustiva en Node).
+    catalog_bytes=check_plan_catalog(root)
+    assert 'js/plan-catalog.js' in parser.paths and 'js/excel_data.js' not in parser.paths,'El arranque debe usar el catálogo compacto'
+    assert "+'_zoom'" not in html,'Quedó una referencia al control eliminado que bloquea el plan'
+    originals=[('cellPos','block','8822912cb88f80d4fe88bcc262b867827ec741311475e9ffa278c2d0669eb04a'),('layoutMarkers','renderLayout','934f88dc8f3ef9590ca200e78623af92dfc397af5a703f348449a78bcfdd2a9c'),('renderRoutines','setTotals','5b160b40b92010629c1013ebe70fb3c07711f75d172ebefb585fbff627769601')]
     for name,end,digest in originals:
         start=html.index('function '+name+'(')
         function=html[start:html.index('function '+end+'(',start)]
@@ -72,7 +78,7 @@ def audit(root: Path=ROOT) -> dict:
     assert actions and all(re.fullmatch(r'[^@]+@[a-f0-9]{40}',action) for action in actions),'Falta fijar acciones a SHA'
     assert 'scripts/validate_update.py --site _site' in workflow and 'needs: validar' in workflow,'La publicación debe depender de la revisión completa'
     assert 'js/motor-loader.js' in html,'Falta el verificador de integridad'
-    return {'estado':'VERDE','version':'24','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
+    return {'estado':'VERDE','version':'26','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'catalogo_bytes':catalog_bytes,'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
 
 if __name__=='__main__':
     try:print(json.dumps(audit(),ensure_ascii=False,indent=2))

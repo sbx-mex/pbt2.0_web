@@ -3,6 +3,7 @@
  'use strict';
  const core=typeof module!=='undefined'&&module.exports?require('./weekly-core.js'):root.PBT_WEEKLY_CORE;
  const MAX_INDEX=64*1024*1024,MAX_TOTAL=512*1024*1024;
+ const verified=new WeakSet();
  function checkSignal(signal){if(signal?.aborted)throw new DOMException('Lectura cancelada','AbortError');}
  function abortable(promise,signal){
   if(!signal)return Promise.resolve(promise);
@@ -26,15 +27,29 @@
   for(const file of manifest.files){core.weekInfo(file.week);if(weeks.has(file.week)||typeof file.path!=='string'||!/^.+\.csv$/i.test(file.path)||!/^[a-f0-9]{64}$/.test(file.sha256)||!Number.isInteger(file.bytes)||file.bytes<1||file.bytes>25*1024*1024)throw Error('Manifiesto de motores inválido.');weeks.add(file.week);total+=file.bytes;}
   if(total>MAX_TOTAL)throw Error('El histórico supera 512 MB.');return manifest;
  }
- async function loadRepository(fetcher,signal){
-  const options={cache:'no-store',signal};
-  const response=await fetcher('data/motores/manifest.json',options),manifest=validateManifest(JSON.parse(await boundedText(response,256*1024,signal)));
-  const index=await fetcher('data/motores/indice.json',options),text=await boundedText(index,MAX_INDEX,signal);
+ function sameManifest(left,right){
+  if(left.index.sha256!==right.index.sha256||left.index.bytes!==right.index.bytes||left.files.length!==right.files.length)return false;
+  const files=new Map(left.files.map(file=>[file.week,file]));
+  return right.files.every(file=>{const actual=files.get(file.week);return actual&&['path','sha256','bytes'].every(key=>actual[key]===file[key]);});
+ }
+ async function restoreRepository(snapshot,signal){
+  checkSignal(signal);const manifest=validateManifest(snapshot?.manifest),text=snapshot.text;
+  if(typeof text!=='string')throw Error('Respaldo de motores incompatible.');
   if(new TextEncoder().encode(text).length!==manifest.index.bytes||await sha256(text)!==manifest.index.sha256)throw Error('Índice y manifiesto no coinciden. Reintenta cuando termine la publicación.');
   checkSignal(signal);const pack=core.validatePack(JSON.parse(text));
   const files=new Map(pack.files.map(file=>[file.week,file]));
   if(files.size!==manifest.files.length||manifest.files.some(file=>{const actual=files.get(file.week);return !actual||['path','sha256','bytes'].some(key=>actual[key]!==file[key]);}))throw Error('El índice no corresponde a los CSV validados.');
-  return {pack,offline:response.headers.get('X-PBT-Offline')==='1'||index.headers.get('X-PBT-Offline')==='1'};
+  const result={pack,text,manifest};verified.add(result);return result;
+ }
+ async function loadRepository(fetcher,signal,previous){
+  const options={cache:'no-store',signal};
+  const response=await fetcher('data/motores/manifest.json',options),manifest=validateManifest(JSON.parse(await boundedText(response,256*1024,signal)));
+  if(previous&&verified.has(previous)&&sameManifest(previous.manifest,manifest)){
+   checkSignal(signal);const result={...previous,unchanged:true,offline:response.headers.get('X-PBT-Offline')==='1'};verified.add(result);return result;
+  }
+  const index=await fetcher('data/motores/indice.json',options),text=await boundedText(index,MAX_INDEX,signal);
+  const result=await restoreRepository({manifest,text},signal);
+  result.offline=response.headers.get('X-PBT-Offline')==='1'||index.headers.get('X-PBT-Offline')==='1';return result;
  }
  function mergeHistory(previous,incoming){
   core.validatePack(previous);core.validatePack(incoming);
@@ -48,6 +63,6 @@
   core.validatePack(pack);if(new TextEncoder().encode(JSON.stringify(pack)).length>MAX_INDEX)throw Error('El índice supera 64 MB.');
   return {pack,changes:{added:incoming.files.filter(file=>!oldFiles.has(file.week)).length,updated:incoming.files.filter(file=>oldFiles.has(file.week)&&oldFiles.get(file.week).sha256!==file.sha256).length,retained:previous.files.filter(file=>!incomingWeeks.has(file.week)).length}};
  }
- const api={abortable,boundedText,validateManifest,loadRepository,mergeHistory};
+ const api={abortable,boundedText,validateManifest,restoreRepository,loadRepository,mergeHistory};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PBT_MOTOR_IO=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
