@@ -7,14 +7,15 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  group: pbt-seguro-${{ github.ref }}
+  cancel-in-progress: false
+  queue: max
 jobs:
   validar:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
-      - name: Descargar proyecto
+      - name: Descargar versión exacta
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           persist-credentials: false
@@ -22,25 +23,68 @@ jobs:
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: '3.12'
-      - name: Actualizar y revisar con Python antes de publicar
+      - name: Preparar Node para las pruebas de JavaScript
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '22'
+      - name: Retirar únicamente obsoletos verificados de la copia de trabajo
+        run: python scripts/ci_maintenance.py clean --apply
+      - name: Validar datos, cálculos, pruebas y sitio con Python
         run: python scripts/validate_update.py --site _site
-      - name: Guardar sitio para Pages
+      - name: Guardar sitio validado para Pages
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
         with:
           path: _site
-  publicar:
+  limpiar_repositorio:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: validar
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     permissions:
+      contents: write
+    outputs:
+      current: ${{ steps.cleanup.outputs.current }}
+      sha: ${{ steps.cleanup.outputs.sha }}
+    steps:
+      - name: Descargar controles de la versión validada
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci_maintenance.py
+          sparse-checkout-cone-mode: false
+      - name: Registrar sólo los borrados autorizados si main sigue vigente
+        id: cleanup
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci_maintenance.py persist
+  publicar:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.limpiar_repositorio.outputs.current == 'true'
+    needs: [validar, limpiar_repositorio]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Publicar versión validada
+      - name: Descargar control de vigencia
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts/ci_maintenance.py
+          sparse-checkout-cone-mode: false
+      - name: Comprobar que no haya otra carga posterior
+        id: head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ needs.limpiar_repositorio.outputs.sha }}
+        run: python3 scripts/ci_maintenance.py check-head --expected-sha "$EXPECTED_SHA"
+      - name: Publicar únicamente el sitio validado y vigente
+        if: steps.head.outputs.current == 'true'
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
 
