@@ -52,7 +52,9 @@ def audit(root: Path=ROOT) -> dict:
     directory=read_compiled(root/'js/store-directory.js')
     assert 'aboutDialog' in parser.ids and 'aboutButton' in parser.ids,'Falta Acerca de'
     assert 'teamButton' in parser.ids and html.index('id="equipo"')<html.index('id="aboutDialog"'),'Equipo debe estar en la parte principal'
-    assert 'Diseñado por Enrique César Flores & Jorge Antonio Alcantar Aguiar' in renderer,'Créditos incompletos'
+    assert 'drawText(CREDIT' not in renderer and 'Diseñado por' not in renderer,'El PDF debe omitir el pie de página'
+    assert 'js/device-store.js' in parser.paths and 'js/device-ui.js' in parser.paths,'Falta el guardado por CeCo'
+    assert 'padding-bottom:45.454545%' in (root/'css/styles.css').read_text(),'Falta altura compatible para el plano móvil'
     assert '#DistritoKike' not in html+(root/'js/app.js').read_text()+(root/'data/project.json').read_text(),'Firma obsoleta en la app'
     assert 'window.PBT_DIRECTORY' not in renderer,'El exportador debe conservar su snapshot'
     pack=build(root/'data/motores')
@@ -70,7 +72,7 @@ def audit(root: Path=ROOT) -> dict:
     assert actions and all(re.fullmatch(r'[^@]+@[a-f0-9]{40}',action) for action in actions),'Falta fijar acciones a SHA'
     assert 'scripts/validate_update.py --site _site' in workflow and 'needs: validar' in workflow,'La publicación debe depender de la revisión completa'
     assert 'js/motor-loader.js' in html,'Falta el verificador de integridad'
-    return {'estado':'VERDE','version':'23','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
+    return {'estado':'VERDE','version':'24','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
 
 if __name__=='__main__':
     try:print(json.dumps(audit(),ensure_ascii=False,indent=2))

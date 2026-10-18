@@ -23,12 +23,12 @@ test('cache cleanup preserves other projects and their saved files',async()=>{
  await cache.put('https://example.test/other/js/data.js',new Response('other'));await f.caches.open('controlops-cache');await f.activate();
  assert.ok(f.databases.has('controlops-cache'));assert.ok(await cache.match('https://example.test/other/js/data.js'));assert.equal(await cache.match(f.scope+'js/data.js'),undefined);
 });
-test('V23 keeps the cached original plays available across the interface upgrade',async()=>{
+test('V24 keeps the cached original plays available across the interface upgrade',async()=>{
  const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v20-data',cache=await f.caches.open(name);await cache.put(f.scope+'js/excel_data.js?v=20',new Response('original engine'));
  await f.activate();f.setNetwork(async()=>{throw Error('offline');});assert.equal(await(await f.request('js/excel_data.js?v=20')).text(),'original engine');
 });
 
-test('V23 removes the retired sale cube from its cache while preserving the original plays',async()=>{
+test('V24 removes the retired sale cube from its cache while preserving the original plays',async()=>{
  const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v20-data',cache=await f.caches.open(name);
  await cache.put(f.scope+'js/data.js?v=20',new Response('obsolete sales'));await cache.put(f.scope+'js/excel_data.js?v=20',new Response('plays'));
  await f.activate();assert.equal(await cache.match(f.scope+'js/data.js?v=20'),undefined);assert.equal(await(await cache.match(f.scope+'js/excel_data.js?v=20')).text(),'plays');
@@ -48,7 +48,7 @@ test('the installed CSV worker and its imported core stay available without netw
 });
 
 test('new credits bypass an old unversioned cached project and remain available offline',async()=>{
- const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v23-shell',cache=await f.caches.open(name);
+ const f=fixture(),name='pbt2-web-'+encodeURIComponent(new URL(f.scope).pathname)+'-v24-shell',cache=await f.caches.open(name);
  await cache.put(f.scope+'data/project.json',new Response(JSON.stringify({footer:{title:'Old credits'}})));
  const project=fs.readFileSync(path.join(__dirname,'../data/project.json'),'utf8');f.setNetwork(async()=>new Response(project));
  const app=fs.readFileSync(path.join(__dirname,'../js/app.js'),'utf8'),resource=app.match(/fetch\('([^']*project\.json[^']*)'/)[1];

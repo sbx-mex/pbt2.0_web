@@ -2,7 +2,6 @@
 (function(root){
  'use strict';
  const PAGE=[612,792],MARGIN=36;
- const CREDIT='Diseñado por Enrique César Flores & Jorge Antonio Alcantar Aguiar';
  const template=typeof module!=='undefined'&&module.exports?require('./sheet-template.js'):root.PBT_SHEET;
  function filename(snapshot){
   const code=String(snapshot.ceco||''),partners=Number(snapshot.partners);
@@ -42,7 +41,7 @@
   const header=(label,x,top,w,h=17,size=7.5)=>{rect(x,top,w,h,GREEN,GREEN);text(label,x+3,top+(h-size)/2-1,w-6,size,{bold:true,color:'#ffffff',center:true});};
   const newPage=()=>{page=pdf.addPage(PAGE);return page;};
   newPage();
-  text(snapshot.store,36,36,425,10,{bold:true,color:GREEN});text('PBT · '+(tab==='dt'?'DT':'CAFÉ'),492,36,84,9,{bold:true,color:GREEN,center:true});
+  text(snapshot.store,36,37,425,10,{bold:true,color:GREEN});text('PBT · '+(tab==='dt'?'DT':'CAFÉ'),492,37,84,9,{bold:true,color:GREEN,center:true});
   const period=column(2,4),comments=column(7,9),shift=column(4,2),channels=column(7,3),mix=column(11,5);
   const periodTop=51,fieldValues=[['Rango de fechas',snapshot.months],['Días de la semana',snapshot.days],['Turno',snapshot.daypart]];
   const fieldHeights=fieldValues.map(([,value])=>Math.max(15,wrap(value,shift.width-8,7.6).length*9.2+6));
@@ -82,12 +81,11 @@
   tableHeader();
   for(const row of snapshot.routines){
    const cells=[row.partner,row.station,row.fixed,row.routine],lines=cells.map((value,i)=>wrap(value,columns[i][1]-8,7.5)),height=Math.max(19,...lines.map(value=>value.length*9.2+8));
-   if(y+height>738){newPage();text(snapshot.store+' · '+snapshot.days+' · '+snapshot.daypart,36,36,540,9,{bold:true,color:GREEN});y=55;tableHeader();}
+   if(y+height>738){newPage();text(snapshot.store+' · '+snapshot.days+' · '+snapshot.daypart,36,37,540,9,{bold:true,color:GREEN});y=55;tableHeader();}
    if(height>738-y)throw Error('Una rutina excede el espacio de una página. Revisa el contenido antes de exportar.');
    let x=36;cells.forEach((value,i)=>{const w=columns[i][1];rect(x,y,w,height,'#ffffff');text(value,x+4,y+4,w-8,7.5,{lineHeight:9.2,center:i===2});x+=w;});y+=height;
   }
-  pdf.getPages().forEach((item,index,all)=>{item.drawText(CREDIT,{x:36,y:39,size:6.5,font:regular,color:color('#5b625e')});if(all.length>1)item.drawText((index+1)+' / '+all.length,{x:550,y:39,size:6.5,font:regular,color:color(INK)});});
   return pdf.save();
  }
- const api={create,filename,column,PAGE,MARGIN,CREDIT};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PBT_PDF=api;
+ const api={create,filename,column,PAGE,MARGIN};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PBT_PDF=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

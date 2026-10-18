@@ -52,3 +52,11 @@ test('an old original-source preference restores only validated CSV and cannot r
  await f.start();assert.equal(f.context.PBT_WEEKLY.active,true);assert.equal(f.context.PBT_WEEKLY.ready,true);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').basis,'units');
  await f.choose([csvFile('202602',120)]);assert.equal(f.stored.original,undefined);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').unidades,220);
 });
+
+
+test('replacing a source keeps the CeCo but cannot silently broaden an unavailable saved month',async()=>{
+ const f=fixture(publisher(await makePack()));await f.start();f.state.cafe.filters.tienda=['CeCo 38101'];f.state.cafe.filters.mes=['Ene 2026'];
+ await f.choose([csvFile('202605',120)]);
+ assert.equal(f.state.cafe.filters.tienda[0],'CeCo 38101');assert.equal(f.state.cafe.filters.mes[0],'Ene 2026');
+ assert.equal(f.context.PBT_WEEKLY.engine.calculate({Tienda:f.state.cafe.filters.tienda,Mes:f.state.cafe.filters.mes},'CAFE').valid,false);
+});

@@ -95,3 +95,15 @@ test('uploaded consolidated workbook logic reproduces all store/week/context sel
  const example=e.calculate({Tienda:['CeCo 38368'],Semana:[28,29,30,31,32].map(w=>'2025'+w),DayPart:['Afternoon'],Weekpart:['Weekday']});
  assert.equal(example.unidades,f.example.total);assert.deepEqual(Object.values(example.mix),[36,3,45,12,4]);assert.deepEqual(core.apportion([1166,90,1426,372,124],1),f.example.mix);assert.deepEqual([example.canales.Lobby,example.canales['Pick up & Delivery']],f.example.channels);assert.equal(checked,144);
 });
+
+test('available store lists exclude zero-unit stores and separate current DT evidence from AA',async()=>{
+ const csv='Tiendas,Semana,Clas_Semana,DayPart,Distribucion Canal,Mix de Producto,Unidades,Unidades AA\n'+
+ '38101,202601,Lun-Jue,1_Mañana,Lobby,Espresso,50,40\n'+
+ '38102,202601,Lun-Jue,1_Mañana,Lobby,Espresso,0,20\n'+
+ '38134,202601,Lun-Jue,1_Mañana,DT,Espresso,10,8\n'+
+ '38144,202601,Lun-Jue,1_Mañana,DT,Espresso,0,9\n'+
+ '38144,202601,Lun-Jue,1_Mañana,Lobby,Espresso,20,10\n';
+ const buffer=new TextEncoder().encode(csv),e=core.engine(core.combine([await core.parseMotor(buffer.buffer,'week.csv')]));
+ assert.deepEqual(e.availableStores('CAFE'),['CeCo 38101']);assert.deepEqual(e.availableStores('DT'),['CeCo 38134']);
+ assert.equal(e.typeOf('CeCo 38144'),'DT');assert.equal(e.stores().length,4);
+});
