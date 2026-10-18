@@ -8,10 +8,10 @@ from pathlib import Path
 import re
 import subprocess
 try:
-    from .build_weekly_motor import ROOT, build, serialize, week_info
+    from .build_weekly_motor import ROOT, build, serialize, week_info, manifest_for
     from .build_store_directory import read_compiled
 except ImportError:
-    from build_weekly_motor import ROOT, build, serialize, week_info
+    from build_weekly_motor import ROOT, build, serialize, week_info, manifest_for
     from build_store_directory import read_compiled
 
 class Links(HTMLParser):
@@ -54,6 +54,7 @@ def audit(root: Path=ROOT) -> dict:
     codes={row[0] for row in directory['stores']}
     assert all(code in codes for code,kind in pack['stores']),'Hay CeCo sin nombre en el directorio'
     expected=serialize(pack);assert (root/'data/motores/indice.json').read_text(encoding='utf-8')==expected,'Índice desactualizado'
+    assert json.loads((root/'data/motores/manifest.json').read_text(encoding='utf-8'))==manifest_for(pack,expected),'Manifiesto desactualizado'
     assert len(expected.encode())<=64*1024*1024,'Divide el archivo histórico: el índice supera 64 MB'
     for path in [root/'sw.js',*list((root/'js').glob('*.js'))]:subprocess.run(['node','--check',str(path)],check=True,capture_output=True)
     # Inline scripts are still part of the original UI and must compile, too.
@@ -62,7 +63,9 @@ def audit(root: Path=ROOT) -> dict:
     workflow=(root/'.github/workflows/motores-semanales.yml').read_text(encoding='utf-8')
     actions=re.findall(r'uses:\s*(\S+)',workflow)
     assert actions and all(re.fullmatch(r'[^@]+@[a-f0-9]{40}',action) for action in actions),'Falta fijar acciones a SHA'
-    return {'estado':'VERDE','version':'21','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
+    assert 'scripts/validate_update.py --site _site' in workflow and 'needs: validar' in workflow,'La publicación debe depender de la revisión completa'
+    assert 'js/motor-loader.js' in html,'Falta el verificador de integridad'
+    return {'estado':'VERDE','version':'22','motores':len(pack['files']),'semanas':[w['id'] for w in pack['weeks']],'registros':sum(f['rows'] for f in pack['files']),'unidades':sum(f['units'] for f in pack['files']),'grupos':len(pack['rows']),'motor_original_sin_cambios':True,'calendario_original_445':True,'enlaces_locales':len(parser.paths),'formato_exportacion':'Carta vertical, margen 12.7 mm','indice_bytes':len(expected.encode()),'tiendas_directorio':len(directory['stores']),'cruces_CeCo_completos':True}
 
 if __name__=='__main__':
     try:print(json.dumps(audit(),ensure_ascii=False,indent=2))

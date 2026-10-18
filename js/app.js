@@ -51,8 +51,8 @@
     var original=window.showTab;
     window.showTab=function(tab,keepSelection){
       original(tab,keepSelection);
-      ['cafe','dt','equipo'].forEach(function(name){
-        var button=document.getElementById(name==='cafe'?'tabCafe':name==='dt'?'tabDt':'tabEquipo');
+      ['cafe','dt'].forEach(function(name){
+        var button=document.getElementById(name==='cafe'?'tabCafe':'tabDt');
         if(button)button.setAttribute('aria-selected',String(name===tab));
       });
     };
@@ -62,9 +62,10 @@
   function markReady(){
     var chip=document.getElementById('readyChip');
     var loader=document.getElementById('appLoading');
-    if(chip){chip.textContent='Listo para planear';chip.classList.add('ready')}
-    if(loader){loader.classList.add('hidden');setTimeout(function(){loader.remove()},260)}
-    document.documentElement.setAttribute('data-app-ready','true');
+    var source=window.PBT_WEEKLY||{},ready=source.ready===true;
+    if(chip){chip.textContent=ready?(source.active?'Motor CSV listo':'Base original activa'):(source.error?'Revisar motor':'Cargando motor…');chip.classList.toggle('ready',ready)}
+    if(loader&&(ready||source.error)){loader.classList.add('hidden');setTimeout(function(){loader.remove()},260)}
+    document.documentElement.setAttribute('data-app-ready',String(ready));
   }
 
   memoizeEngine();
@@ -78,4 +79,11 @@
     memoizeEngine();improveTabs();
     requestAnimationFrame(function(){requestAnimationFrame(markReady)});
   });
+  document.addEventListener('pbt:source',markReady);
+  document.addEventListener('keydown',function(event){
+    if(!event.target.closest||!event.target.closest('.tabs [role="tab"]')||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    event.preventDefault();var next=event.key==='Home'?'cafe':event.key==='End'?'dt':(activeTab==='cafe'?'dt':'cafe');
+    showTab(next);document.getElementById(next==='cafe'?'tabCafe':'tabDt').focus();
+  });
+  document.addEventListener('visibilitychange',function(){if(!document.hidden&&typeof applyOperationalContext==='function')applyOperationalContext(false);});
 })();

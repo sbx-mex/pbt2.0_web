@@ -1,6 +1,6 @@
 const CACHE_PREFIX='pbt2-web-'+encodeURIComponent(new URL(self.registration.scope).pathname)+'-';
-const CACHE_NAME=CACHE_PREFIX+'v21-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
-const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=21','./js/app.js?v=21','./js/store-directory.js?v=21','./js/weekly-core.js?v=21','./js/weekly-ui.js?v=21','./js/weekly-worker.js?v=21','./js/print.js?v=21','./js/pdf-renderer.js?v=21','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE_NAME=CACHE_PREFIX+'v22-shell',DATA_CACHE=CACHE_PREFIX+'v20-data';
+const SHELL_FILES=['./','./index.html','./manifest.json','./css/styles.css?v=22','./js/app.js?v=22','./js/store-directory.js?v=22','./js/weekly-core.js?v=22','./js/motor-loader.js?v=22','./js/weekly-ui.js?v=22','./js/weekly-worker.js?v=22','./js/print.js?v=22','./js/pdf-renderer.js?v=21','./js/vendor/pdf-lib.min.js?v=1.17.1','./data/project.json','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL_FILES)).then(()=>self.skipWaiting()));
 });
@@ -16,12 +16,12 @@ self.addEventListener('activate',event=>{
 self.addEventListener('fetch',event=>{
  if(event.request.method!=='GET')return;
  const url=new URL(event.request.url);if(url.origin!==self.location.origin)return;
- const isIndex=url.pathname.endsWith('/data/motores/indice.json');
+ const isIndex=/\/data\/motores\/(?:indice|manifest)\.json$/.test(url.pathname);
  const isEngine=/\/js\/(?:data|excel_data)\.js$/.test(url.pathname);
  const isNavigation=event.request.mode==='navigate';
  if(isIndex||isNavigation){
   event.respondWith(caches.open(CACHE_NAME).then(async cache=>{
-   try{const response=await fetch(event.request);if(!response.ok)throw Error('HTTP '+response.status);await cache.put(event.request,response.clone()).catch(()=>{});return response;}
+   try{const response=await fetch(event.request);if(!response.ok)throw Error('HTTP '+response.status);if(isIndex){const copy=response.clone();await copy.json();}await cache.put(event.request,response.clone()).catch(()=>{});return response;}
    catch(error){const cached=await cache.match(event.request);if(cached){if(isIndex){const headers=new Headers(cached.headers);headers.set('X-PBT-Offline','1');return new Response(cached.body,{status:cached.status,headers});}return cached;}if(isNavigation){const index=await cache.match('./index.html');if(index)return index;}return new Response('Recurso no disponible sin conexión',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}});}
   }));return;
  }

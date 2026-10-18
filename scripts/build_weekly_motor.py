@@ -9,8 +9,10 @@ from decimal import Decimal
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import re
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / 'data/motores'
@@ -162,6 +164,25 @@ def serialize(pack: dict) -> str:
     return json.dumps(pack, ensure_ascii=False, separators=(',',':'), allow_nan=False)+'\n'
 
 
+def manifest_for(pack: dict, text: str) -> dict:
+    data = text.encode('utf-8')
+    if len(data) > 64 * 1024 * 1024:
+        raise MotorError('El índice supera 64 MB; divide el histórico antes de publicar')
+    return {'schema':1, 'index':{'path':'indice.json','bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()},
+            'files':[{key:file[key] for key in ['path','week','sha256','bytes']} for file in pack['files']]}
+
+
+def atomic_write(path: Path, text: str) -> None:
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=path.name+'.', suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(text.encode('utf-8'));stream.flush();os.fsync(stream.fileno())
+        temporary.replace(path)
+    finally:
+        if temporary and temporary.exists():temporary.unlink()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--folder', type=Path, default=FOLDER)
@@ -170,14 +191,15 @@ def main() -> int:
     try:
         pack = build(args.folder)
         text = serialize(pack)
+        manifest_text = serialize(manifest_for(pack, text))
         output = args.folder/'indice.json'
+        manifest_output = args.folder/'manifest.json'
         if args.check:
-            if not output.exists() or output.read_text(encoding='utf-8') != text:
+            if not output.exists() or output.read_text(encoding='utf-8') != text or not manifest_output.exists() or manifest_output.read_text(encoding='utf-8') != manifest_text:
                 raise MotorError('Índice desactualizado: ejecuta python scripts/build_weekly_motor.py')
         else:
-            temporary = output.with_suffix('.json.tmp')
-            temporary.write_text(text, encoding='utf-8')
-            temporary.replace(output)
+            atomic_write(output, text)
+            atomic_write(manifest_output, manifest_text)
         print(json.dumps({'estado':'VERDE','semanas':len(pack['weeks']),'motores':len(pack['files']),'registros':sum(meta['rows'] for meta in pack['files']),'unidades':sum(meta['units'] for meta in pack['files']),'grupos':len(pack['rows']),'indice_bytes':len(text.encode('utf-8'))}, ensure_ascii=False))
         return 0
     except (MotorError, UnicodeError, csv.Error, OSError) as error:

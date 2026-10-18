@@ -1,9 +1,9 @@
 'use strict';
-importScripts('./weekly-core.js?v=21');
+importScripts('./weekly-core.js?v=22');
 self.onmessage=async function(event){
  try{
   const files=event.data.files;
-  if(!Array.isArray(files)||!files.length||files.length>128||files.reduce((n,item)=>n+item.file.size,0)>512*1024*1024)throw Error('Selecciona entre 1 y 128 CSV; máximo 512 MB');
+  if(!Array.isArray(files)||!files.length||files.length>128||files.some(item=>!item?.file?.size||item.file.size>25*1024*1024)||files.reduce((n,item)=>n+item.file.size,0)>512*1024*1024)throw Error('Selecciona entre 1 y 128 CSV; máximo 25 MB por archivo y 512 MB en total');
   const motors=[];
   for(let i=0;i<files.length;i++){
    const item=files[i];self.postMessage({progress:(i+1)+'/'+files.length+' · '+item.path});
