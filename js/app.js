@@ -54,7 +54,7 @@
   }
 
   improveTabs();
-  fetch('data/project.json?v=23',{cache:'no-cache'}).then(function(response){
+  fetch('data/project.json?v=24',{cache:'no-cache'}).then(function(response){
     if(!response.ok)throw new Error('project.json '+response.status);
     return response.json();
   }).then(applyProject).catch(function(){applyProject(FALLBACK_PROJECT)});

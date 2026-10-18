@@ -134,6 +134,8 @@
   const stores=new Map(pack.stores),weeks=new Map(pack.weeks.map(info=>[info.id,info])),files=new Map(pack.files.map(file=>[file.week,file])),cache=new Map();
   const months=[...new Set(pack.weeks.map(info=>info.label))];
   const labels=type=>pack.stores.filter(item=>!type||item[1]===type).map(item=>'CeCo '+item[0]);
+  const current=new Map();for(const row of pack.rows){const value=current.get(row[0])||[0,0];value[0]+=row[4];value[1]+=row[12];current.set(row[0],value);}
+  const availableStores=type=>labels(type).filter(label=>{const value=current.get(label.slice(5));return value[0]>0&&(type!=='DT'||value[1]>0);});
   function calculate(filters={},type='CAFE'){
    if(!['CAFE','DT'].includes(type))throw Error('Tipo de tienda inválido');
    for(const field of ['Mes','DayPart','Weekpart','Semana','Tienda'])if(filters[field]!==undefined&&!Array.isArray(filters[field]))throw Error('Filtro inválido: '+field);
@@ -163,7 +165,7 @@
     exact:valid?{mix:object(MIX_NAMES,mixUnits.map(value=>value/sum[0]*100)),channels:object(CHANNEL_NAMES,channelUnits.map(value=>value/sum[0]*100))}:null};
    cache.set(key,result);if(cache.size>120)cache.delete(cache.keys().next().value);return result;
   }
-  return {calculate,months,stores:labels,typeOf:label=>stores.get(String(label).replace(/^CeCo /,'')),pack};
+  return {calculate,months,availableStores,stores:labels,typeOf:label=>stores.get(String(label).replace(/^CeCo /,'')),pack};
  }
  const api={number,weekInfo,decode,splitCSV,parseMotor,combine,migratePack,validatePack,apportion,engine};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PBT_WEEKLY_CORE=api;

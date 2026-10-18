@@ -24,7 +24,7 @@ test('the PDF retains the original arrangement of period, comments, shift, chann
  const period=find('Periodo de tiempo'),comments=find('Comentarios'),shift=find('Información de turno'),channels=find('Distribución de canales'),mix=find('Mix de productos');
  assert.equal(period.y,comments.y);assert.ok(period.x<comments.x);assert.ok(shift.y<period.y);assert.ok(Math.abs(shift.y-channels.y)<1);assert.ok(Math.abs(channels.y-mix.y)<1);assert.ok(shift.x<channels.x&&channels.x<mix.x);
  assert.ok(find('Plan de distribución recomendado').y<channels.y);assert.ok(find('Rutinas').y<find('Plan de distribución recomendado').y);
- assert.ok(drawn.some(item=>item.value===renderer.CREDIT));assert.ok(drawn.every(item=>!/#DistritoKike|Seleccionar|2026/.test(item.value)));
+ assert.ok(!drawn.some(item=>/Diseñado por|Enrique César|Jorge Antonio/.test(item.value)));assert.ok(drawn.every(item=>item.y>60));assert.ok(drawn.every(item=>!/#DistritoKike|Seleccionar|2026/.test(item.value)));
 });
 
 test('out-of-bounds partner positions are rejected rather than exported outside the original layout',async()=>{

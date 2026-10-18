@@ -54,3 +54,42 @@ body{background:#f6f8f6;color:#243b30}.header{background:#fff;color:#006241;box-
 @media print{.main-navigation,.main-team,.header,.about-dialog{display:none!important}}
 
 .layout .sheet-label{font-size:clamp(6px,.9vw,11px)}.partner-marker .marker-name{max-width:100%}
+
+/* V24: explicit plan dimensions also work without aspect-ratio support. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.page,.filter,.manual-context,.op-clock-card{min-width:0}
+.layout{height:0;min-height:0;padding-bottom:45.454545%;aspect-ratio:auto;box-sizing:content-box}
+#dt .layout{height:0;padding-bottom:58.823529%;aspect-ratio:auto}
+.layout-wrap{overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.layout-wrap.zoomed .layout{width:760px;height:345.455px;padding-bottom:0}
+#dt .layout-wrap.zoomed .layout{height:447.059px;padding-bottom:0}
+.plan-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.plan-zoom,.recover-team{border:1px solid #b9cec3;border-radius:9px;background:transparent;color:#006241;font-weight:600;padding:10px 12px;min-height:44px;cursor:pointer}
+.plan-zoom[aria-pressed=true]{background:#e8efea}
+.team-button:disabled,.plan-zoom:disabled{opacity:.45;cursor:default}
+.team-heading{align-items:flex-start}.team-store{font-size:12px;color:#52685c;margin:5px 0 0}
+.team-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px}
+#teamSaveStatus{font-size:12px;color:#52685c}#teamSaveStatus.save-error{color:#9a3d28}
+.recover-team{margin-bottom:12px}.main-team .team-list{max-height:360px;max-height:min(360px,48vh);overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+.manual-context{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-column:2/4;margin:0;gap:12px}
+.about-dialog{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
+.about-content{max-height:calc(100vh - 110px);max-height:calc(100dvh - 110px);-webkit-overflow-scrolling:touch}
+@media(max-width:760px){
+ .container{padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+ .team-input,.team-search,.partner-select,.partner-name-select,.manual-context select,.store-search-input{font-size:16px!important}
+ .main-team .team-list{grid-template-columns:minmax(0,1fr)}
+ .main-team .team-row{grid-template-columns:23px 38px minmax(0,1fr)}
+ .plan-toolbar{align-items:flex-start;flex-wrap:wrap}.plan-toolbar h2{line-height:44px;margin:0}
+ .plan-actions{margin-left:auto}.plan-zoom,.export-button{min-height:44px;font-size:12px;padding:10px}
+ .layout .sheet-label{font-size:clamp(5.5px,1.65vw,8px)}.layout-wrap.zoomed .sheet-label{font-size:11px}
+ .layout-wrap.zoomed .marker-name{font-size:10px}.layout-wrap.zoomed .marker-letter{font-size:15px}
+ .layout-wrap.zoomed .partner-photo-bubble{width:30px;height:30px;top:-22px}
+ .about-dialog{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px)}
+ .about-content{max-height:calc(100vh - 90px);max-height:calc(100dvh - 90px)}
+}
+@media(max-width:430px){.manual-context{grid-column:1/-1;gap:10px}.team-bottom{align-items:flex-start}}
+
+.partner-name-select{font-weight:600;letter-spacing:0;text-transform:none}
+@media(max-width:760px){.partner-name-select{width:130px;max-width:130px;min-height:44px}.partner-name-cell{min-width:160px}}
+
+.pdf-save-dialog{width:min(440px,calc(100vw - 32px));max-height:80vh;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;padding:22px;border:1px solid #c0d1c5;border-radius:16px;color:#243b30;background:#fff;overflow:auto;box-shadow:0 18px 65px #092b2640}.pdf-save-dialog::backdrop{background:#082b2360}.pdf-save-dialog h2{margin:0 0 10px;font-size:20px;color:#006241}.pdf-save-dialog p{font-size:13px;overflow-wrap:anywhere;line-height:1.5}.pdf-save-dialog p:empty{display:none}.pdf-save-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.pdf-save-actions button,.pdf-save-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #006241;border-radius:9px;padding:10px 12px;background:#006241;color:white;font:600 14px Arial,sans-serif;text-decoration:none;cursor:pointer}.pdf-save-actions .pdf-save-close{background:white;color:#006241}

@@ -33,17 +33,38 @@
  function script(src){return new Promise((resolve,reject)=>{const node=document.createElement('script');node.src=src;node.onload=resolve;node.onerror=()=>{node.remove();reject(Error('No se pudo cargar la exportación. Revisa la conexión y vuelve a intentar.'));};document.head.appendChild(node);});}
  async function libraries(){
   if(window.PDFLib&&window.PBT_PDF)return;
-  if(!loading)loading=(async()=>{if(!window.PDFLib)await script('js/vendor/pdf-lib.min.js?v=1.17.1');if(!window.PBT_PDF)await script('js/pdf-renderer.js?v=23');})().catch(error=>{loading=null;throw error;});
+  if(!loading)loading=(async()=>{if(!window.PDFLib)await script('js/vendor/pdf-lib.min.js?v=1.17.1');if(!window.PBT_PDF)await script('js/pdf-renderer.js?v=24');})().catch(error=>{loading=null;throw error;});
   await loading;
+ }
+ let exportDialog=null;
+ function offerFile(file,url,button){
+  if(exportDialog)exportDialog.close();
+  const dialog=document.createElement('dialog');dialog.className='pdf-save-dialog';dialog.setAttribute('aria-label','Guardar PDF');
+  const heading=document.createElement('h2');heading.textContent='PDF listo';dialog.appendChild(heading);
+  const name=document.createElement('p');name.textContent=file.name;dialog.appendChild(name);
+  const actions=document.createElement('div');actions.className='pdf-save-actions';dialog.appendChild(actions);
+  const status=document.createElement('p');status.setAttribute('role','status');dialog.appendChild(status);
+  let canShare=false;try{canShare=!!navigator.share&&!!navigator.canShare&&navigator.canShare({files:[file]});}catch{}
+  if(canShare){const share=document.createElement('button');share.type='button';share.textContent='Guardar / compartir';share.onclick=async()=>{
+   share.disabled=true;try{await navigator.share({files:[file]});}catch(error){if(error.name!=='AbortError')status.textContent='Usa Descargar PDF para guardar el archivo.';}finally{share.disabled=false;}
+  };actions.appendChild(share);}
+  const link=document.createElement('a');link.href=url;link.download=file.name;link.target='_blank';link.rel='noopener';link.textContent='Descargar PDF';actions.appendChild(link);
+  const close=document.createElement('button');close.type='button';close.className='pdf-save-close';close.textContent='Cerrar';close.onclick=()=>dialog.close();actions.appendChild(close);
+  function cleanup(){dialog.remove();if(exportDialog===dialog)exportDialog=null;setTimeout(()=>URL.revokeObjectURL(url),60000);button.focus({preventScroll:true});}
+  dialog.addEventListener('close',cleanup,{once:true});document.body.appendChild(dialog);exportDialog=dialog;
+  if(dialog.showModal)dialog.showModal();else{dialog.setAttribute('open','');dialog.close=()=>{dialog.removeAttribute('open');cleanup();};}
  }
  window.exportPBTLetter=async function(){
   if(window.PBT_EXPORT_BUSY)return;
   const tab=activeTab,button=$(tab+'_export');if(!button)return;const original=button.textContent;
+  const ios=/iPad|iPhone|iPod/.test(navigator.userAgent||'')||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   try{
    applyOperationalContext(false);
    const snapshot=buildPBTSnapshot(activeTab);window.PBT_EXPORT_BUSY=true;button.disabled=true;button.textContent='Preparando PDF…';
-   await libraries();const bytes=await PBT_PDF.create(snapshot,PDFLib),url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),link=document.createElement('a');
-   link.href=url;link.download=PBT_PDF.filename(snapshot);document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+   await libraries();const bytes=await PBT_PDF.create(snapshot,PDFLib),filename=PBT_PDF.filename(snapshot),file=new File([bytes],filename,{type:'application/pdf'}),url=URL.createObjectURL(file);
+   // The second, explicit tap keeps native file sharing within iOS user activation.
+   if(ios)offerFile(file,url,button);
+   else{const link=document.createElement('a');link.href=url;link.download=filename;link.rel='noopener';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
   }catch(error){alert(error.message||'No se pudo generar el PDF.');}
   finally{window.PBT_EXPORT_BUSY=false;button.textContent=original;if(['cafe','dt'].includes(activeTab))renderDataTab(activeTab);else button.disabled=true;}
  };
