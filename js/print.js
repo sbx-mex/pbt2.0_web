@@ -38,6 +38,7 @@
   if(!loading)loading=(async()=>{if(!window.PDFLib)await script('js/vendor/pdf-lib.min.js?v=27');if(!window.PBT_PDF)await script('js/pdf-renderer.js?v=27');})().catch(error=>{loading=null;throw error;});
   await loading;
  }
+ window.PBT_EXPORT={libraries};
  let exportDialog=null;
  function offerFile(file,url,button){
   if(exportDialog)exportDialog.close();
