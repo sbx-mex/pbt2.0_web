@@ -15,7 +15,28 @@ function normalize(job){
 function key(job){return JSON.stringify(normalize(job));}
 function expand(base,choices){const jobs=[];for(const weekpart of DAYS)for(const daypart of SHIFTS)for(const partners of [...new Set(choices[weekpart]?.[daypart]||[])].sort((a,b)=>a-b))jobs.push(normalize({...base,weekpart,daypart,partners}));return jobs;}
 function merge(existing,added){const map=new Map(existing.map(j=>[key(j),normalize(j)]));let duplicates=0;for(const job of added){const k=key(job);if(map.has(k))duplicates++;else map.set(k,normalize(job));}if(map.size>MAX)throw Error('El lote admite hasta '+MAX+' planes. Descárgalo antes de agregar más.');return {jobs:[...map.values()],duplicates,added:map.size-existing.length};}
-function path(job,filename){const j=normalize(job),period=j.months.map(monthCode).join('_');return 'CeCo_'+j.ceco+'/'+period+'/'+(j.weekpart==='Weekday'?'Lun-Jue':'Vie-Dom')+(j.tab==='dt'?'/Tablet_'+(j.partnerTablet==='Sí'?'Si':'No'):'')+'/'+filename;}
+const SHIFT_LABELS={Morning:'Mañana · 6 am a 12 pm',Lunch:'Intermedio · 12 pm a 5 pm',Afternoon:'Tarde · 5 pm a 6 am (día siguiente)'};
+function shiftLabel(value){if(!SHIFTS.includes(value))throw Error('Turno inválido.');return SHIFT_LABELS[value];}
+function periodName(months){
+ const codes=months.map(monthCode),groups=[];let start=codes[0],last=start;
+ const serial=v=>Number(v.slice(0,4))*12+Number(v.slice(5));
+ for(const value of codes.slice(1)){if(serial(value)===serial(last)+1)last=value;else{groups.push(start===last?start:start+'a'+last);start=last=value;}}
+ groups.push(start===last?start:start+'a'+last);return groups.join('+');
+}
+function pdfName(job){
+ const j=normalize(job),day=j.weekpart==='Weekday'?'1-Lun-Jue':'2-Vie-Dom',shift={Morning:'1-Manana',Lunch:'2-Intermedio',Afternoon:'3-Tarde'}[j.daypart];
+ const name=['PBT',j.ceco,periodName(j.months),day,shift,String(j.partners).padStart(2,'0')+'Partners',j.tab==='dt'?'DT_Tablet-'+(j.partnerTablet==='Sí'?'Si':'No'):'CAFE'].join('_')+'.pdf';
+ if(name.length>255)throw Error('El nombre del período es demasiado largo. Divide los meses en dos lotes.');
+ return name;
+}
+function path(job){return pdfName(job);}
+function order(jobs){return jobs.map(normalize).sort((a,b)=>Number(a.ceco)-Number(b.ceco)||pdfName(a).localeCompare(pdfName(b),'en'));}
+function archiveName(jobs,date=new Date()){
+ if(!Array.isArray(jobs)||!jobs.length||jobs.length>MAX||!Number.isFinite(date.getTime()))throw Error('Lote o fecha no válidos.');
+ const codes=[...new Set(jobs.map(j=>normalize(j).ceco))],ceco=codes.length===1?codes[0]:'VariosCeCo';
+ const stamp=String(date.getDate()).padStart(2,'0')+String(date.getMonth()+1).padStart(2,'0')+String(date.getFullYear()).slice(-2);
+ return 'PBT_Planes_'+jobs.length+'_'+ceco+'_'+stamp+'.zip';
+}
 const table=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;table[n]=c>>>0;}
 function crc(bytes){let c=0xffffffff;for(const byte of bytes)c=table[(c^byte)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
 function zip(files,date=new Date()){
@@ -35,8 +56,18 @@ function zip(files,date=new Date()){
  const end=new Uint8Array(22),e=new DataView(end.buffer);e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,centralSize,true);e.setUint32(16,offset,true);
  return new Blob([...locals,...central,end],{type:'application/zip'});
 }
-function csv(rows){return '\ufeff'+rows.map(row=>row.map(value=>{let s=String(value??'');if(/^[\s]*[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}).join(',')).join('\r\n');}
-const api={MAX,monthCode,normalize,key,expand,merge,path,zip,csv};
+function pdfZip(files,date=new Date()){
+ if(!Array.isArray(files)||!files.length||files.length>MAX)throw Error('Selecciona entre 1 y '+MAX+' PDF.');
+ const names=new Set();
+ for(const file of files){
+  const name=file.name,bytes=file.bytes;
+  if(typeof name!=='string'||name.length>255||!/^PBT_[A-Za-z0-9_+.-]+\.pdf$/.test(name)||names.has(name.toLowerCase()))throw Error('El ZIP admite sólo PDF con nombres únicos, sin subcarpetas.');
+  if(!(bytes instanceof Uint8Array)||bytes.length<5||String.fromCharCode(...bytes.subarray(0,5))!=='%PDF-'||!new TextDecoder().decode(bytes.subarray(Math.max(0,bytes.length-1024))).includes('%%EOF'))throw Error('Uno de los PDF no se generó correctamente. Vuelve a intentar.');
+  names.add(name.toLowerCase());
+ }
+ return zip(files,date);
+}
+const api={MAX,monthCode,normalize,key,expand,merge,path,pdfName,order,archiveName,shiftLabel,zip,pdfZip};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PBT_BATCH_CORE=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
 

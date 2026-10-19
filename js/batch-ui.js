@@ -2,7 +2,7 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id),core=PBT_BATCH_CORE,esc=escHtml;
-const DAYS={Weekday:'Lun–Jue',Weekend:'Vie–Dom'},SHIFTS={Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'},STORAGE='pbt-crear-planes-v1';
+const DAYS={Weekday:'Lun–Jue',Weekend:'Vie–Dom'},SHIFTS=Object.fromEntries(['Morning','Lunch','Afternoon'].map(key=>[key,core.shiftLabel(key)])),STORAGE='pbt-crear-planes-v1';
 let jobs=[],busy=false,cancelled=false,downloadURL='',activeCode='',monthSignature='',persistFailed=false,previewIndex=-1;
 const defaults={Morning:[2,3,4,5],Lunch:[2,3,4],Afternoon:[3,4,5]};
 try{const saved=JSON.parse(localStorage.getItem(STORAGE)||'[]');if(Array.isArray(saved)&&saved.length<=core.MAX)jobs=core.merge([],saved).jobs;}catch{}
@@ -19,7 +19,7 @@ function build(){
  <section class="batch-card"><div class="batch-step"><span>2</span><h2>Selecciona los meses</h2></div><div class="batch-mini-actions"><button type="button" id="batchAllMonths">Todos</button><button type="button" id="batchNoMonths">Limpiar selección</button></div><div id="batchMonths" class="batch-months"></div><p class="batch-hint">Los meses seleccionados se calculan juntos como un período. Agrega otro período al lote cuando lo necesites.</p></section>
  <section class="batch-card"><div class="batch-step"><span>3</span><h2>Elige tus combinaciones</h2></div><p class="batch-hint">Marca los números de partners para cada turno. Cada número marcado crea un plan.</p><button type="button" class="batch-example" id="batchExample">Usar ejemplo: 10 planes por grupo de días</button><div id="batchCombinations"></div><p id="batchSelection" class="batch-selection" role="status"></p><button type="button" id="batchAdd" class="batch-primary">Agregar al lote</button><p id="batchNotice" role="status" aria-live="polite"></p></section>
  </fieldset></div>
- <aside class="batch-card batch-basket" aria-labelledby="batchBasketTitle"><div class="batch-basket-heading"><div><p class="batch-eyebrow">LISTOS PARA REVISAR</p><h2 id="batchBasketTitle">Mi lote <span id="batchCount">0</span></h2></div><button id="batchClear" class="batch-text-button" type="button">Vaciar lote</button></div><p id="batchSaved" class="batch-hint">Tu lote se guarda en este navegador. Los PDF se crean al descargar.</p><div id="batchQueue"></div><div class="batch-export"><p id="batchSummary"></p><button id="batchGenerate" class="batch-primary" type="button" disabled>Crear ZIP</button><progress id="batchProgress" max="1" value="0" hidden aria-label="Generación de planes"></progress><p id="batchProgressText" role="status" aria-live="polite"></p><button id="batchCancel" class="batch-secondary" type="button" hidden>Cancelar generación</button><a id="batchDownload" class="batch-primary batch-download" download hidden>Descargar ZIP</a><p class="batch-hint">Incluye PDF por combinación, un resumen CSV y el detalle de los filtros y fuentes.</p></div></aside></div>
+ <aside class="batch-card batch-basket" aria-labelledby="batchBasketTitle"><div class="batch-basket-heading"><div><p class="batch-eyebrow">LISTOS PARA REVISAR</p><h2 id="batchBasketTitle">Mi lote <span id="batchCount">0</span></h2></div><button id="batchClear" class="batch-text-button" type="button">Vaciar lote</button></div><p id="batchSaved" class="batch-hint">Tu lote se guarda en este navegador. Los PDF se crean al descargar.</p><div id="batchQueue"></div><div class="batch-export"><p id="batchSummary"></p><button id="batchGenerate" class="batch-primary" type="button" disabled>Crear ZIP</button><progress id="batchProgress" max="1" value="0" hidden aria-label="Generación de planes"></progress><p id="batchProgressText" role="status" aria-live="polite"></p><button id="batchCancel" class="batch-secondary" type="button" hidden>Cancelar generación</button><a id="batchDownload" class="batch-primary batch-download" download hidden>Descargar ZIP</a><p class="batch-hint">El ZIP contiene únicamente tus PDF, todos al mismo nivel y ordenados por tienda, período, días, turno y partners.</p></div></aside></div>
  <dialog id="batchPreview" class="batch-preview-dialog" aria-labelledby="batchPreviewTitle"><div class="batch-preview-toolbar"><h2 id="batchPreviewTitle">Vista previa</h2><button id="batchPreviewClose" class="batch-secondary" type="button">Cerrar</button></div><div id="batchPreviewBody"></div></dialog>`;
  $('batchCeco').addEventListener('input',storeChanged);
  $('batchEditor').addEventListener('change',selectionChanged);
@@ -130,7 +130,7 @@ function setBusy(value){
 }
 async function generate(){
  if(busy||!jobs.length)return;
- invalidate();cancelled=false;const engine=PBT_WEEKLY.engine,at=new Date(),batch=jobs.map(j=>core.normalize(j)),snapshots=[];
+ invalidate();cancelled=false;const engine=PBT_WEEKLY.engine,at=new Date(),batch=core.order(jobs),snapshots=[];
  try{
   setBusy(true);
   if(window.PBT_DEVICE?.ready)await PBT_DEVICE.ready;
@@ -138,23 +138,18 @@ async function generate(){
   for(const job of batch)snapshots.push(buildPBTBatchSnapshot(job,at));
   $('batchProgress').max=batch.length;$('batchProgress').value=0;$('batchProgressText').textContent='Preparando la exportación…';
   await PBT_EXPORT.libraries();
-  const files=[],records=[];
+  const files=[];
   for(let i=0;i<batch.length;i++){
    if(cancelled)throw Error('Generación cancelada. Tu lote se conserva.');
    if(PBT_WEEKLY.engine!==engine||!ready())throw Error('La fuente cambió durante la exportación. Revisa el lote y vuelve a generar.');
    const snapshot=snapshots[i],job=batch[i];$('batchProgressText').textContent='Creando plan '+(i+1)+' de '+batch.length+' · CeCo '+job.ceco;
    await new Promise(resolve=>setTimeout(resolve,0));
-   const bytes=await PBT_PDF.create(snapshot,PDFLib),name=core.path(job,PBT_PDF.filename(snapshot));files.push({name,bytes});
-   records.push({...job,file:name,store:snapshot.store,units:snapshot.units,weeks:snapshot.weeks,play:snapshot.play});
+   const bytes=await PBT_PDF.create(snapshot,PDFLib),name=core.pdfName(job);files.push({name,bytes});
    $('batchProgress').value=i+1;
   }
   if(cancelled||PBT_WEEKLY.engine!==engine)throw Error('La generación se interrumpió. Tu lote se conserva.');
-  const summary=[['Archivo','CeCo','Tienda','Tipo','Meses','Días','Turno','Partners','Tablet','Unidades','Semanas'],...records.map(r=>[r.file,r.ceco,r.store,r.tab==='dt'?'DT':'Café',r.months.join(' | '),DAYS[r.weekpart],SHIFTS[r.daypart],r.partners,r.partnerTablet,r.units,r.weeks.join(' | ')])];
-  const used=new Set(records.flatMap(r=>r.weeks));
-  files.push({name:'RESUMEN.csv',bytes:core.csv(summary)});
-  files.push({name:'MANIFIESTO.json',bytes:JSON.stringify({schema:1,createdAt:at.toISOString(),count:records.length,monthRule:'Calendario PBT 4-4-5; meses seleccionados combinados por unidades.',files:engine.pack.files.filter(f=>used.has(f.week)).map(({path,week,sha256})=>({path,week,sha256})),plans:records},null,2)});
-  const zip=core.zip(files,at);downloadURL=URL.createObjectURL(zip);const link=$('batchDownload');link.href=downloadURL;link.download='PBT_Planes_'+batch.length+'_'+[at.getFullYear(),String(at.getMonth()+1).padStart(2,'0'),String(at.getDate()).padStart(2,'0')].join('-')+'.zip';link.hidden=false;
-  $('batchProgressText').textContent='ZIP listo: '+batch.length+' PDF + resumen y detalle de fuentes.';notice('Todos los planes se generaron. Pulsa Descargar ZIP para guardarlos.');link.focus();
+  const zip=core.pdfZip(files,at);downloadURL=URL.createObjectURL(zip);const link=$('batchDownload');link.href=downloadURL;link.download=core.archiveName(batch,at);link.hidden=false;
+  $('batchProgressText').textContent='ZIP listo: '+batch.length+' PDF listos para abrir.';notice('Todos los planes se generaron. Pulsa Descargar ZIP para guardarlos.');link.focus();
  }catch(error){$('batchProgressText').textContent=error.message||'No terminó la generación. Tu lote se conserva.';notice(error.message||'Revisa el lote y vuelve a intentar.',true);}
  finally{setBusy(false);renderQueue();selectionChanged();}
 }

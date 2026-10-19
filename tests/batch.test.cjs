@@ -28,26 +28,49 @@ test('all added plans are preserved when exceeding the batch cap is rejected',()
  const existing=Array.from({length:core.MAX},(_,i)=>({...one,ceco:String(10000+i)}));
  assert.throws(()=>core.merge(existing,[{...one,ceco:'99999'}]),/120/);assert.equal(existing.length,120);
 });
-test('month folder names prevent overwriting PDFs whose original names match',()=>{
- const [one]=core.expand(base,choices),file='PBT_38937_lun-jue_Manana_2Partners.pdf';
- assert.notEqual(core.path(one,file),core.path({...one,months:['Ene 2026']},file));
- assert.match(core.path(one,file),/2026-01_2026-02/);
+test('flat PDF names include store, period, days, shift, padded partners and type',()=>{
+ const [one]=core.expand(base,choices),file=core.pdfName(one);
+ assert.ok(!file.includes('/'));assert.match(file,/^PBT_38937_2026-01a2026-02_1-Lun-Jue_1-Manana_02Partners_CAFE\.pdf$/);
+ assert.notEqual(file,core.pdfName({...one,months:['Ene 2026']}));
+ assert.notEqual(core.pdfName({...one,tab:'dt'}),core.pdfName({...one,tab:'dt',partnerTablet:'Sí'}));
+ assert.notEqual(core.pdfName({...one,months:['Ene 2026','Mar 2026']}),core.pdfName({...one,months:['Ene 2026','Feb 2026','Mar 2026']}));
 });
-test('ZIP rejects unsafe or duplicate paths and enforces the memory bound',()=>{
+test('ZIP name follows count, CeCo and local ddmmaa',()=>{
+ const jobs=core.expand(base,choices),date=new Date(2026,9,18,19,30);
+ assert.equal(core.archiveName(jobs,date),'PBT_Planes_20_38937_181026.zip');
+ assert.equal(core.archiveName([jobs[0],{...jobs[1],ceco:'38134'}],date),'PBT_Planes_2_VariosCeCo_181026.zip');
+ assert.throws(()=>core.archiveName([],date));
+});
+test('export order is independent from the order in which plans were added',()=>{
+ const jobs=core.expand(base,choices),normal=core.order(jobs).map(core.pdfName),reversed=core.order(jobs.slice().reverse()).map(core.pdfName);
+ assert.deepEqual(normal,reversed);assert.equal(normal[0],core.pdfName(jobs[0]));
+ const one=jobs[0];assert.ok(core.pdfName({...one,partners:2})<core.pdfName({...one,partners:10}));
+});
+test('shift labels explain all three time ranges and the overnight turn',()=>{
+ assert.equal(core.shiftLabel('Morning'),'Mañana · 6 am a 12 pm');
+ assert.equal(core.shiftLabel('Lunch'),'Intermedio · 12 pm a 5 pm');
+ assert.equal(core.shiftLabel('Afternoon'),'Tarde · 5 pm a 6 am (día siguiente)');
+ assert.throws(()=>core.shiftLabel('Night'));
+});
+test('PDF export rejects directories, extra files, duplicate names and incomplete output',()=>{
+ const bytes=new TextEncoder().encode('%PDF-1.7\n%%EOF'),pdf={name:'PBT_38937_Plan.pdf',bytes};
+ for(const name of ['folder/PBT_38937_Plan.pdf','../PBT_38937_Plan.pdf','RESUMEN.csv','MANIFIESTO.json'])assert.throws(()=>core.pdfZip([{name,bytes}]));
+ assert.throws(()=>core.pdfZip([pdf,{...pdf,name:'PBT_38937_plan.pdf'}]));
+ assert.throws(()=>core.pdfZip([{...pdf,bytes:new Uint8Array([1,2,3])}]));
+ assert.throws(()=>core.pdfZip([{...pdf,bytes:new TextEncoder().encode('%PDF-1.7 incomplete')}]));
+ assert.throws(()=>core.pdfZip([]));
+});
+test('ZIP rejects unsafe paths and enforces its memory bound',()=>{
  for(const name of ['../x','/x','x/../y','x'+String.fromCharCode(92)+'y'])assert.throws(()=>core.zip([{name,bytes:'x'}]));
  assert.throws(()=>core.zip([{name:'a',bytes:'x'},{name:'a',bytes:'y'}]));
  assert.throws(()=>core.zip([{name:'big',bytes:new Uint8Array(64*1024*1024+1)}]),/64 MB/);
 });
-test('Python zipfile independently validates names, CRC32, Unicode and every byte',async()=>{
+test('Python independently verifies flat names, CRC32 and all PDF bytes',async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'pbt-zip-'));
  try{
-  const files=[{name:'CeCo_38937/Ene/plan.pdf',bytes:new Uint8Array([0,255,10,34])},{name:'RESUMEN.csv',bytes:core.csv([['Tienda','Mes'],['Café México','Ene 2026']])},{name:'detalle/mañana.txt',bytes:'Mañana · café'}];
-  fs.writeFileSync(path.join(tmp,'plans.zip'),new Uint8Array(await core.zip(files).arrayBuffer()));
-  const script="import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;assert len(z.namelist())==3;assert z.read('CeCo_38937/Ene/plan.pdf')==bytes([0,255,10,34]);assert z.read('detalle/mañana.txt').decode()=='Mañana · café';assert z.read('RESUMEN.csv').decode('utf-8-sig').startswith(chr(34)+'Tienda'+chr(34))";
-  execFileSync(process.env.PYTHON||(process.platform==='win32'?'python':'python3'),['-c',script,path.join(tmp,'plans.zip')]);
+  const jobs=core.expand(base,choices).slice(0,2),files=jobs.map(job=>({name:core.pdfName(job),bytes:new TextEncoder().encode('%PDF-1.7\n%%EOF')})),name=core.archiveName(jobs,new Date(2026,9,18));
+  fs.writeFileSync(path.join(tmp,name),new Uint8Array(await core.pdfZip(files).arrayBuffer()));
+  const script="import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;assert len(z.namelist())==2;assert all('/' not in n and n.endswith('.pdf') for n in z.namelist());assert all(z.read(n)==b'%PDF-1.7\\n%%EOF' for n in z.namelist())";
+  execFileSync(process.env.PYTHON||(process.platform==='win32'?'python':'python3'),['-c',script,path.join(tmp,name)]);
  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
-test('CSV escapes commas, quotes and spreadsheet formula input',()=>{
- const value=core.csv([['A,B','"C"','=1+1','@SUM(A1)']]);assert.match(value,/"A,B"/);assert.match(value,/"""C"""/);assert.ok(value.includes("'=1+1"));assert.ok(value.includes("'@SUM(A1)"));
-});
-
