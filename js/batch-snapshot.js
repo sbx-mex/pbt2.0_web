@@ -29,7 +29,7 @@ root.buildPBTBatchSnapshot=function(input,today=new Date()){
  });
  if(!areas.length)throw Error('El catálogo no tiene coordenadas para este plano.');
  const routines=rows.map(r=>{const name=person(r[0]),t=tablet&&pbtCleanLetter(r[0])==='B';return {partner:r[0]+(name?' · '+name:''),station:r[1]+(t?' + Carril':''),fixed:r[2],routine:r[3]+(t?' + Tablet':'')};});
- const months=pbtPeriodLabel(job.months),days=pbtWeekLabel(job.weekpart).replace('–',' - '),daypart=PBT_BATCH_CORE.shiftLabel(job.daypart),store=pbtStoreLabel(label),quarter='Q'+(Math.floor(today.getMonth()/3)+1);
+ const months=pbtPeriodLabel(job.months),days=pbtWeekLabel(job.weekpart).replace('–',' - '),daypart=pbtDayLabel(job.daypart),store=pbtStoreLabel(label),quarter='Q'+(Math.floor(today.getMonth()/3)+1);
  const channels=mapCh(ch),mix=mapMix(m);
  return {title:config[tab].title,tab,partners:job.partners,partnerTablet:job.partnerTablet,store,ceco:job.ceco,weekpart:job.weekpart,daypartKey:job.daypart,months,selectedMonths:job.months.slice(),selectedWeeks:(job.weeks||[]).slice(),days,daypart,quarter,
   comments:'Plan para la tienda '+store+', con base en '+months+', '+days+' y turno '+daypart+'. Referencia para la planificación estimada del '+quarter+' actual.'+(job.weeks?.length?' '+PBT_WEEKS.label(job.weeks)+'.':''),

@@ -3,12 +3,12 @@
 'use strict';
 const $=id=>document.getElementById(id),core=PBT_BATCH_CORE,esc=escHtml;
 const DAYS={Weekday:'Lun–Jue',Weekend:'Vie–Dom'},SHIFTS=Object.fromEntries(['Morning','Lunch','Afternoon'].map(key=>[key,core.shiftLabel(key)])),STORAGE='pbt-crear-planes-v1';
-let editorWeeks=[],editorMonths='',jobs=[],busy=false,cancelled=false,downloadURL='',activeCode='',monthSignature='',persistFailed=false,previewIndex=-1;
+let editorWeeks=[],editorMonths='',jobs=[],busy=false,cancelled=false,downloadURL='',downloadFile=null,activeCode='',monthSignature='',persistFailed=false,previewIndex=-1;
 const defaults={Morning:[2,3,4,5],Lunch:[2,3,4],Afternoon:[3,4,5]};
 try{const saved=JSON.parse(localStorage.getItem(STORAGE)||'[]');if(Array.isArray(saved)&&saved.length<=core.MAX)jobs=core.merge([],saved).jobs;}catch{}
 function ready(){return PBT_WEEKLY?.ready&&!PBT_WEEKLY.loading&&PBT_PLAN?.ready;}
 function notice(message,error=false){$('batchNotice').textContent=message;$('batchNotice').classList.toggle('batch-error',error);}
-function invalidate(){if(downloadURL)URL.revokeObjectURL(downloadURL);downloadURL='';$('batchDownload').hidden=true;}
+function invalidate(){if(downloadURL)URL.revokeObjectURL(downloadURL);downloadURL='';downloadFile=null;$('batchDownload').hidden=true;}
 function save(){invalidate();try{localStorage.setItem(STORAGE,JSON.stringify(jobs));persistFailed=false;}catch{persistFailed=true;}$('batchSaved').textContent=persistFailed?'El navegador no pudo guardar el borrador. Conserva esta ventana abierta.':'Tu lote se guarda en este navegador. Los PDF se crean al descargar.';}
 function build(){
  $('batchSection').innerHTML=`
@@ -31,6 +31,10 @@ function build(){
  $('batchBack').onclick=()=>setOpen(false);
  $('batchClear').onclick=()=>{if(!jobs.length||busy)return;if(!confirm('¿Vaciar los '+jobs.length+' planes del lote?'))return;jobs=[];save();renderQueue();notice('Lote vacío. Puedes empezar otra selección.');};
  $('batchGenerate').onclick=generate;
+ $('batchDownload').addEventListener('click',event=>{
+  if(!PBT_EXPORT.isIOS())return;event.preventDefault();
+  if(downloadFile)PBT_EXPORT.offerFile(downloadFile,URL.createObjectURL(downloadFile),$('batchDownload'));
+ });
  $('batchCancel').onclick=()=>{cancelled=true;$('batchProgressText').textContent='Cancelando…';};
  $('batchPreviewClose').onclick=()=>$('batchPreview').close();
  $('batchPreview').addEventListener('close',()=>{$('batchQueue').querySelector('[data-preview="'+previewIndex+'"]')?.focus();});
@@ -156,7 +160,7 @@ async function generate(){
    $('batchProgress').value=i+1;
   }
   if(cancelled||PBT_WEEKLY.engine!==engine)throw Error('La generación se interrumpió. Tu lote se conserva.');
-  const zip=core.pdfZip(files,at);downloadURL=URL.createObjectURL(zip);const link=$('batchDownload');link.href=downloadURL;link.download=core.archiveName(batch,at);link.hidden=false;
+  const zip=core.pdfZip(files,at);downloadURL=URL.createObjectURL(zip);const link=$('batchDownload');link.href=downloadURL;link.download=core.archiveName(batch,at);downloadFile=new File([zip],link.download,{type:'application/zip'});link.hidden=false;
   $('batchProgressText').textContent='ZIP listo: '+batch.length+' PDF listos para abrir.';notice('Todos los planes se generaron. Pulsa Descargar ZIP para guardarlos.');link.focus();
  }catch(error){$('batchProgressText').textContent=error.message||'No terminó la generación. Tu lote se conserva.';notice(error.message||'Revisa el lote y vuelve a intentar.',true);}
  finally{setBusy(false);renderQueue();selectionChanged();}

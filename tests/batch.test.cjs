@@ -74,3 +74,15 @@ test('Python independently verifies flat names, CRC32 and all PDF bytes',async()
   execFileSync(process.env.PYTHON||(process.platform==='win32'?'python':'python3'),['-c',script,path.join(tmp,name)]);
  }finally{fs.rmSync(tmp,{recursive:true,force:true});}
 });
+
+test('batch PDF snapshots print only the shift name while screen labels retain their hours',()=>{
+ const vm=require('node:vm'),weeks=require('../js/weeks.js'),names={Morning:'Mañana',Lunch:'Intermedio',Afternoon:'Tarde'},data={valid:true,registros:1,basis:'units',unidades:123,weeks:['202640'],canales:{Lobby:90,'Pick up & Delivery':10},mix:{Espresso:50,'Café filtrado':5,CBS:30,Food:10,Otro:5}};
+ let filters;
+ const c={PBT_BATCH_CORE:core,PBT_WEEKS:weeks,PBT_PLAN:{ready:true},PBT_WEEKLY:{ready:true,loading:false,engine:{pack:{weeks:[{id:'202640',label:'Oct 2026'}]},months:['Oct 2026'],availableStores:()=>['CeCo 38937'],calculate:f=>{filters=f;return data;}}},
+ config:{cafe:{tipoEngine:'CAFE',title:'CAFÉ',channelLabels:[['Lobby','','lobby'],['Pick up & Delivery','','mop']]}},mixLabels:[['Espresso','','esp']],getPlay:()=>({play:'original'}),EXCEL_DATA:{routines:{original:[['A','POS','Sí','Rutina']]},coords:{original:[['CAFE',1,1,'A']]}},pbtCleanLetter:x=>x,pbtIsFixedValue:x=>x==='Sí',pbtLayoutName:()=>'CAFE',cellPos:()=>({left:5,top:10,width:5,height:10}),document:{createElement:()=>({style:{}})},cleanPartnerName:x=>x||'',pbtPeriodLabel:()=> 'Oct',pbtWeekLabel:()=> 'Lun–Jue',pbtDayLabel:k=>names[k],pbtStoreLabel:()=> '38937 · Tienda',pctText:x=>x+'%'};
+ vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/batch-snapshot.js'),'utf8'),c);
+ for(const daypart of Object.keys(names)){
+ const job={ceco:'38937',tab:'cafe',months:['Oct 2026'],weeks:['202640'],weekpart:'Weekday',daypart,partners:4},s=c.buildPBTBatchSnapshot(job);
+ assert.equal(s.daypart,names[daypart]);assert.doesNotMatch(s.comments,/\bam\b|\bpm\b|día siguiente/);assert.match(s.comments,new RegExp('turno '+names[daypart]+'\\.'));assert.equal(s.units,123);assert.equal(s.play,'original');assert.equal(filters.Semana[0],'202640');assert.equal(s.selectedWeeks[0],'202640');assert.match(core.shiftLabel(daypart),/am|pm/);
+ }
+});
