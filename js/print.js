@@ -28,8 +28,9 @@
   const routines=[...$(tab+'_tbody').querySelectorAll('tr')].map(node=>{const cells=node.querySelectorAll('td'),select=cells[0].querySelector('select');return {partner:(cells[0].querySelector('.partner-letter')?.textContent||'')+(select?.value&&select.value.toLowerCase()!=='seleccionar'?' · '+select.value:''),station:cells[1].textContent,fixed:cells[2].textContent,routine:cells[3].textContent};});
   const selectedMonths=current.filters.mes.length?current.filters.mes.slice():getSourceList('Mes').slice(),months=pbtPeriodLabel(selectedMonths),days=pbtWeekLabel(current.filters.weekpart[0]).replace('–',' - '),daypart=pbtDayLabel(current.filters.daypart[0]),store=pbtStoreLabel(current.filters.tienda[0]),quarter='Q'+(Math.floor(today.getMonth()/3)+1);
   const comments='Plan para la tienda '+store+', con base en '+months+', '+days+' y turno '+daypart+'. Referencia para la planificación estimada del '+quarter+' actual.';
+  const selectedWeeks=(current.filters.semana||[]).slice(),weekNote=selectedWeeks.length?' '+PBT_WEEKS.label(selectedWeeks)+'.':'';
   return {title:config[tab].title,tab,partners:current.partners,partnerTablet:current.partnerTablet,store,ceco,weekpart:current.filters.weekpart[0],daypartKey:current.filters.daypart[0],
-   months,selectedMonths,days,daypart,quarter,comments,
+   months,selectedMonths,selectedWeeks,days,daypart,quarter,comments:comments+weekNote,
    channels:config[tab].channelLabels.map(([label,,key])=>[label,pctText(v.channels[key])]),mix:mixLabels.map(([label,,key])=>[label,pctText(v.mix[key])]),areas,routines};
  };
  function script(src){return new Promise((resolve,reject)=>{const node=document.createElement('script');node.src=src;node.onload=resolve;node.onerror=()=>{node.remove();reject(Error('No se pudo cargar la exportación. Revisa la conexión y vuelve a intentar.'));};document.head.appendChild(node);});}

@@ -2,13 +2,14 @@
 (function(root){
  'use strict';
  const PAGE=[612,792],MARGIN=36;
+ const weekTools=typeof module!=='undefined'&&module.exports?require('./weeks.js'):root.PBT_WEEKS;
  const template=typeof module!=='undefined'&&module.exports?require('./sheet-template.js'):root.PBT_SHEET;
  function filename(snapshot){
   const code=String(snapshot.ceco||''),partners=Number(snapshot.partners);
   const days={Weekday:'lun-jue',Weekend:'vie-dom'}[snapshot.weekpart];
   const part={Morning:'Manana',Lunch:'Intermedio',Afternoon:'Tarde'}[snapshot.daypartKey];
   if(!/^\d{3,8}$/.test(code)||!days||!part||!Number.isInteger(partners)||partners<1||partners>13)throw Error('Selecciona una tienda y un filtro válido antes de exportar.');
-  return 'PBT_'+code+'_'+days+'_'+part+'_'+partners+'Partners.pdf';
+  return 'PBT_'+code+'_'+days+'_'+part+'_'+partners+'Partners'+(snapshot.selectedWeeks?.length?'_S'+weekTools.token(snapshot.selectedWeeks):'')+'.pdf';
  }
  function column(column,span=1){
   const total=template.columns.reduce((a,b)=>a+b,0),left=template.columns.slice(0,column-2).reduce((a,b)=>a+b,0),width=template.columns.slice(column-2,column-2+span).reduce((a,b)=>a+b,0);

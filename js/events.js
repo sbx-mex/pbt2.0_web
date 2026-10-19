@@ -2,7 +2,7 @@
 (function(){
  'use strict';
  const click={
-  'create-plans':()=>openCreatePlans(),
+  'create-plans':()=>openCreatePlans(),'about-plans':()=>{closeAbout();openCreatePlans(true);},weeks:n=>openPBTWeeks(n.dataset.tab),
   about:()=>openAbout(),'close-about':()=>closeAbout(),tab:n=>showTab(n.dataset.tab),team:()=>toggleEquipo(),'team-close':()=>toggleEquipo(false),'recover-team':()=>recoverPreviousTeam(),
   months:n=>toggleMS(n.dataset.tab,'mes'),'months-all':n=>selectAllMS(n.dataset.tab,'mes'),clear:n=>clearStore(n.dataset.tab),store:n=>selectStore(n.dataset.tab,n.dataset.store),mode:n=>setCalculationMode(n.dataset.tab),export:()=>exportPBTLetter(),
   photo:n=>{if(/^(photo|camera)_(cafe|dt)_\d{1,2}$/.test(n.dataset.target))document.getElementById(n.dataset.target)?.click();},

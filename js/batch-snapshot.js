@@ -7,7 +7,8 @@ root.buildPBTBatchSnapshot=function(input,today=new Date()){
  const engine=source.engine;
  if(!engine.availableStores(config[tab].tipoEngine).includes(label))throw Error('El CeCo no tiene datos activos para este tipo de tienda.');
  if(job.months.some(m=>!engine.months.includes(m)))throw Error('Uno de los meses ya no está disponible. Revisa el lote.');
- const data=engine.calculate({Tienda:[label],Mes:job.months,Weekpart:[job.weekpart],DayPart:[job.daypart]},config[tab].tipoEngine);
+ PBT_WEEKS.validate(engine.pack,job.months,job.weeks||[]);
+ const data=engine.calculate({Tienda:[label],Mes:job.months,Semana:job.weeks||[],Weekpart:[job.weekpart],DayPart:[job.daypart]},config[tab].tipoEngine);
  if(!data.valid||!data.registros||data.basis!=='units')throw Error(data.reason||'No hay datos válidos para este período y turno.');
  const ch=data.canales,m=data.mix,pc=data.playCanales||ch,pm=data.playMix||m;
  const mapCh=o=>({lobby:o.Lobby,mop:o['Pick up & Delivery'],dt:tab==='dt'?o.DT:0}),mapMix=o=>({esp:o.Espresso,brew:o['Café filtrado'],cbs:o.CBS,food:o.Food,other:o.Otro});
@@ -30,8 +31,8 @@ root.buildPBTBatchSnapshot=function(input,today=new Date()){
  const routines=rows.map(r=>{const name=person(r[0]),t=tablet&&pbtCleanLetter(r[0])==='B';return {partner:r[0]+(name?' · '+name:''),station:r[1]+(t?' + Carril':''),fixed:r[2],routine:r[3]+(t?' + Tablet':'')};});
  const months=pbtPeriodLabel(job.months),days=pbtWeekLabel(job.weekpart).replace('–',' - '),daypart=PBT_BATCH_CORE.shiftLabel(job.daypart),store=pbtStoreLabel(label),quarter='Q'+(Math.floor(today.getMonth()/3)+1);
  const channels=mapCh(ch),mix=mapMix(m);
- return {title:config[tab].title,tab,partners:job.partners,partnerTablet:job.partnerTablet,store,ceco:job.ceco,weekpart:job.weekpart,daypartKey:job.daypart,months,selectedMonths:job.months.slice(),days,daypart,quarter,
-  comments:'Plan para la tienda '+store+', con base en '+months+', '+days+' y turno '+daypart+'. Referencia para la planificación estimada del '+quarter+' actual.',
+ return {title:config[tab].title,tab,partners:job.partners,partnerTablet:job.partnerTablet,store,ceco:job.ceco,weekpart:job.weekpart,daypartKey:job.daypart,months,selectedMonths:job.months.slice(),selectedWeeks:(job.weeks||[]).slice(),days,daypart,quarter,
+  comments:'Plan para la tienda '+store+', con base en '+months+', '+days+' y turno '+daypart+'. Referencia para la planificación estimada del '+quarter+' actual.'+(job.weeks?.length?' '+PBT_WEEKS.label(job.weeks)+'.':''),
   channels:config[tab].channelLabels.map(([label,,key])=>[label,pctText(channels[key])]),mix:mixLabels.map(([label,,key])=>[label,pctText(mix[key])]),areas,routines,
   units:data.unidades,weeks:data.weeks.slice(),play};
 };

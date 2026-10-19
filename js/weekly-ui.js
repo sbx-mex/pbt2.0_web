@@ -19,7 +19,7 @@
  window.updateAboutContext=function(){
   const tab=activeTab,selected=state[tab]?.filters.tienda.length===1;
   for(const name of ['cafe','dt'])$(name+'_audit_section').hidden=!selected||name!==tab;
-  $('aboutContext').textContent=selected?pbtStoreLabel(state[tab].filters.tienda[0])+' · '+(state[tab].filters.mes.join(', ')||'Meses disponibles')+' · '+pbtWeekLabel(state[tab].filters.weekpart[0])+' · '+pbtDayLabel(state[tab].filters.daypart[0]):'Elige una tienda en Café o DT para consultar sus unidades.';
+  $('aboutContext').textContent=selected?pbtStoreLabel(state[tab].filters.tienda[0])+' · '+(state[tab].filters.mes.join(', ')||'Meses disponibles')+(state[tab].filters.semana?.length?' · '+PBT_WEEKS.label(state[tab].filters.semana):'')+' · '+pbtWeekLabel(state[tab].filters.weekpart[0])+' · '+pbtDayLabel(state[tab].filters.daypart[0]):'Elige una tienda en Café o DT para consultar sus unidades.';
  };
  window.openAbout=function(){
   updateAboutContext();const dialog=$('aboutDialog');$('aboutButton').setAttribute('aria-expanded','true');
@@ -34,7 +34,7 @@
   const n=value=>value==null?'No disponible':Number(value).toLocaleString('es-MX',{maximumFractionDigits:2}),total=data.unidades;
   const row=(name,value,aa)=>'<tr><td>'+esc(name)+'</td><td>'+n(value)+'</td><td>'+n(aa)+'</td></tr>';
   const table=(title,units,aa)=>'<h3>'+title+'</h3><table><thead><tr><th>Concepto</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+Object.entries(units).filter(([key])=>key!=='DT'||tab==='dt').map(([key,value])=>row(key==='Café filtrado'?'COD':key,value,aa?.[key])).join('')+row('Total',total,data.unidadesAA)+'</tbody></table>';
-  box.innerHTML='<p>Mismos meses, tienda, días y turno que la vista. Cada porcentaje = unidades de la categoría ÷ unidades totales seleccionadas. El cierre a 100% reparte el residuo de redondeo entre las categorías; no modifica las unidades.</p>'+table('Distribución de canal',data.units.channels,data.aa?.channels)+table('Mix de producto',data.units.mix,data.aa?.mix)+'<h3>Comparativo por semana</h3><table><thead><tr><th>Semana actual / AA</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+data.weekly.map(item=>row(item.week.slice(0,4)+' · S'+item.week.slice(4)+' / '+(Number(item.week.slice(0,4))-1)+' · S'+item.week.slice(4),item.units,item.unitsAA)).join('')+'</tbody></table><p>AA es el valor informado por el CSV para el año anterior; nunca se suma al denominador actual. '+(data.hasAA?'':'Para consultar AA de todas las semanas, relee los CSV que incluyan la columna Unidades AA.')+'</p>';
+  box.innerHTML='<p>Mismos meses, semanas, tienda, días y turno que la vista. Cada porcentaje = unidades de la categoría ÷ unidades totales seleccionadas. El cierre a 100% reparte el residuo de redondeo entre las categorías; no modifica las unidades.</p>'+table('Distribución de canal',data.units.channels,data.aa?.channels)+table('Mix de producto',data.units.mix,data.aa?.mix)+'<h3>Comparativo por semana</h3><table><thead><tr><th>Semana actual / AA</th><th>Unidades</th><th>Unidades AA</th></tr></thead><tbody>'+data.weekly.map(item=>row(item.week.slice(0,4)+' · S'+item.week.slice(4)+' / '+(Number(item.week.slice(0,4))-1)+' · S'+item.week.slice(4),item.units,item.unitsAA)).join('')+'</tbody></table><p>AA es el valor informado por el CSV para el año anterior; nunca se suma al denominador actual. '+(data.hasAA?'':'AA requiere datos publicados con la columna Unidades AA.')+'</p>';
  };
  function saveContext(){
   try{localStorage.setItem('pbt-v19-context',JSON.stringify(Object.fromEntries(['cafe','dt'].map(tab=>[tab,{mode:state[tab].mode,weekpart:state[tab].filters.weekpart[0],daypart:state[tab].filters.daypart[0]}]))));}catch{}
@@ -63,7 +63,7 @@
   for(const tab of ['cafe','dt']){
    const available=getSourceList('Mes'),stores=getStoreList(tab),previous=state[tab].filters.tienda[0],months=state[tab].filters.mes;
    const remaining=months.filter(value=>available.includes(value));
-   state[tab].filters.mes=months.length&&!remaining.length?months:remaining;state[tab].filters.q=[];state[tab].filters.semana=[];
+   state[tab].filters.mes=months.length&&!remaining.length?months:remaining;state[tab].filters.q=[];
    const code=previous&&PBT_DIRECTORY.codeOf(previous),matching=previous&&(stores.includes(previous)?previous:(code?stores.find(value=>PBT_DIRECTORY.codeOf(value)===code):null));
    state[tab].filters.tienda=matching?[matching]:[];$(tab+'_tienda_search').value=matching?pbtStoreLabel(matching):'';closeStoreResults(tab);closeMS(tab,'mes',false);
   }
@@ -101,10 +101,10 @@
   lastRepository=sourceKind==='repo'?(options.repository||null):null;
   lastReadAt=options.readAt&&Number.isFinite(Date.parse(options.readAt))?options.readAt:(options.cached?null:new Date().toISOString());
   refreshViews();showFiles(pack,!!options.cached);$('motorChanges').textContent=options.changes?options.changes.added+' nuevas · '+options.changes.updated+' actualizadas · '+options.changes.retained+' conservadas':'';
-  status(options.cached?'Respaldo validado. Relee la fuente para consultar cambios.':(pack.legacyAA?'Relee la carpeta para consultar AA por segmento.':(pack.files.every(file=>file.hasAA)?'Lectura completa. Unidades actuales y AA conciliadas.':'Lectura completa. AA no disponible en todas las semanas.')));
-  if(options.persist!==false&&!await persistSource())status('Lectura completa. Respaldo local no disponible; vuelve a abrir la carpeta al recargar.');
+  status(options.cached?'Respaldo validado. Se comprobarán los datos publicados al iniciar.':(pack.legacyAA?'El respaldo no incluye AA por segmento.':(pack.files.every(file=>file.hasAA)?'Lectura completa. Unidades actuales y AA conciliadas.':'Lectura completa. AA no disponible en todas las semanas.')));
+  if(options.persist!==false&&!await persistSource())status('Lectura completa. El navegador no pudo guardar el respaldo.');
  }
- function setBusy(value){busy=value;PBT_WEEKLY.loading=value;for(const id of ['openMotorFolder','reloadMotorFolder','pickMotorCsv','retryMotor'])$(id).disabled=value;$('cancelMotorRead').hidden=!value||!cancelRead;for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();}
+ function setBusy(value){busy=value;PBT_WEEKLY.loading=value;for(const id of ['openMotorFolder','reloadMotorFolder','pickMotorCsv','retryMotor']){const button=$(id);if(button)button.disabled=value;}$('cancelMotorRead').hidden=!value||!cancelRead;for(const tab of ['cafe','dt'])renderDataTab(tab);notifySource();}
  async function loadRepository(operation){
   const result=await PBT_MOTOR_IO.loadRepository(fetch.bind(window),operation.signal,lastRepository);
   if(result.unchanged&&kind==='repo'&&PBT_WEEKLY.ready&&result.pack===lastPack){
@@ -114,7 +114,7 @@
   }
   const identity=pack=>pack?.files?.map(file=>file.week+':'+file.sha256).sort().join('|'),readAt=identity(lastPack)===identity(result.pack)?lastReadAt:null;
   await activate(result.pack,'data/motores/','repo',null,{repository:result,...(result.offline?{cached:true,readAt}:{})},operation);
-  if(result.offline){status('Sin conexión. Se usa el último motor validado; pulsa Releer carpeta al reconectar.');$('motorOrigin').textContent='CSV activos · respaldo sin conexión';}
+  if(result.offline){status('Sin conexión. Se usa el último motor validado. Recarga la página al reconectar.');$('motorOrigin').textContent='CSV activos · respaldo sin conexión';}
  }
  async function readFiles(files,source,nextHandle,merge,operation){
   const selected=files.filter(item=>/\.csv$/i.test(item.path)).sort((a,b)=>a.path.localeCompare(b.path,'es'));
@@ -163,9 +163,9 @@
   $('directorySummary').textContent='Busca por CeCo o tienda. El directorio aporta los nombres; los CSV determinan las tiendas disponibles.';
   $('aboutDialog').addEventListener('close',()=>{$('aboutButton').setAttribute('aria-expanded','false');$('aboutButton').focus();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('aboutDialog').hasAttribute('open'))closeAbout();});
-  $('openMotorFolder').addEventListener('click',openFolder);$('reloadMotorFolder').addEventListener('click',reload);$('retryMotor').addEventListener('click',()=>run(loadRepository));
-  $('pickMotorCsv').addEventListener('click',()=>$('motorFilesInput').click());$('cancelMotorRead').addEventListener('click',()=>cancelRead?.());
-  for(const id of ['motorFolderInput','motorFilesInput'])$(id).addEventListener('change',event=>{
+  $('openMotorFolder')?.addEventListener('click',openFolder);$('reloadMotorFolder')?.addEventListener('click',reload);$('retryMotor').addEventListener('click',()=>run(loadRepository));
+  $('pickMotorCsv')?.addEventListener('click',()=>$('motorFilesInput').click());$('cancelMotorRead').addEventListener('click',()=>cancelRead?.());
+  for(const id of ['motorFolderInput','motorFilesInput'])$(id)?.addEventListener('change',event=>{
    const input=event.target,files=[...input.files].map(file=>({file,path:file.webkitRelativePath||file.name})),merge=kind==='local'&&(id==='motorFilesInput'||mergeFolderInput);mergeFolderInput=false;
    if(files.length)run(operation=>readFiles(files,files[0].file.webkitRelativePath?.split('/')[0]||'CSV seleccionados',null,merge,operation));input.value='';
   });

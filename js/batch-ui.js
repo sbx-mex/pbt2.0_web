@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id),core=PBT_BATCH_CORE,esc=escHtml;
 const DAYS={Weekday:'Lun–Jue',Weekend:'Vie–Dom'},SHIFTS=Object.fromEntries(['Morning','Lunch','Afternoon'].map(key=>[key,core.shiftLabel(key)])),STORAGE='pbt-crear-planes-v1';
-let jobs=[],busy=false,cancelled=false,downloadURL='',activeCode='',monthSignature='',persistFailed=false,previewIndex=-1;
+let editorWeeks=[],editorMonths='',jobs=[],busy=false,cancelled=false,downloadURL='',activeCode='',monthSignature='',persistFailed=false,previewIndex=-1;
 const defaults={Morning:[2,3,4,5],Lunch:[2,3,4],Afternoon:[3,4,5]};
 try{const saved=JSON.parse(localStorage.getItem(STORAGE)||'[]');if(Array.isArray(saved)&&saved.length<=core.MAX)jobs=core.merge([],saved).jobs;}catch{}
 function ready(){return PBT_WEEKLY?.ready&&!PBT_WEEKLY.loading&&PBT_PLAN?.ready;}
@@ -16,7 +16,7 @@ function build(){
  <p id="batchSource" class="batch-source" role="status"></p>
  <div class="batch-columns"><div class="batch-form-column"><fieldset id="batchEditor" class="batch-editor">
  <section class="batch-card"><div class="batch-step"><span>1</span><h2>Ingresa el CeCo</h2></div><label class="batch-label" for="batchCeco">CeCo de la tienda</label><input id="batchCeco" class="batch-input" type="text" inputmode="numeric" maxlength="8" list="batchStores" placeholder="Ej. 38937" autocomplete="off" aria-describedby="batchStoreLabel"><datalist id="batchStores"></datalist><p id="batchStoreLabel" class="batch-hint" role="status">El tipo Café o DT se identifica automáticamente.</p><div id="batchTabletWrap" hidden><label class="batch-label" for="batchTablet">Partner Tablet</label><select id="batchTablet" class="batch-input"><option>No</option><option>Sí</option></select></div></section>
- <section class="batch-card"><div class="batch-step"><span>2</span><h2>Selecciona los meses</h2></div><div class="batch-mini-actions"><button type="button" id="batchAllMonths">Todos</button><button type="button" id="batchNoMonths">Limpiar selección</button></div><div id="batchMonths" class="batch-months"></div><p class="batch-hint">Los meses seleccionados se calculan juntos como un período. Agrega otro período al lote cuando lo necesites.</p></section>
+ <section class="batch-card"><div class="batch-step"><span>2</span><h2>Selecciona el mes</h2></div><div class="batch-mini-actions"><button type="button" id="batchAllMonths">Todos</button><button type="button" id="batchNoMonths">Limpiar selección</button></div><div id="batchMonths" class="batch-months"></div><button type="button" class="weeks-button" id="batchWeeks" aria-haspopup="dialog">Ver semanas</button><p id="batchWeeksSummary" class="batch-hint" role="status"></p><p class="batch-hint">Los meses seleccionados se calculan juntos como un período. Agrega otro período al lote cuando lo necesites.</p></section>
  <section class="batch-card"><div class="batch-step"><span>3</span><h2>Elige tus combinaciones</h2></div><p class="batch-hint">Marca los números de partners para cada turno. Cada número marcado crea un plan.</p><button type="button" class="batch-example" id="batchExample">Usar ejemplo: 10 planes por grupo de días</button><div id="batchCombinations"></div><p id="batchSelection" class="batch-selection" role="status"></p><button type="button" id="batchAdd" class="batch-primary">Agregar al lote</button><p id="batchNotice" role="status" aria-live="polite"></p></section>
  </fieldset></div>
  <aside class="batch-card batch-basket" aria-labelledby="batchBasketTitle"><div class="batch-basket-heading"><div><p class="batch-eyebrow">LISTOS PARA REVISAR</p><h2 id="batchBasketTitle">Mi lote <span id="batchCount">0</span></h2></div><button id="batchClear" class="batch-text-button" type="button">Vaciar lote</button></div><p id="batchSaved" class="batch-hint">Tu lote se guarda en este navegador. Los PDF se crean al descargar.</p><div id="batchQueue"></div><div class="batch-export"><p id="batchSummary"></p><button id="batchGenerate" class="batch-primary" type="button" disabled>Crear ZIP</button><progress id="batchProgress" max="1" value="0" hidden aria-label="Generación de planes"></progress><p id="batchProgressText" role="status" aria-live="polite"></p><button id="batchCancel" class="batch-secondary" type="button" hidden>Cancelar generación</button><a id="batchDownload" class="batch-primary batch-download" download hidden>Descargar ZIP</a><p class="batch-hint">El ZIP contiene únicamente tus PDF, todos al mismo nivel y ordenados por tienda, período, días, turno y partners.</p></div></aside></div>
@@ -25,6 +25,7 @@ function build(){
  $('batchEditor').addEventListener('change',selectionChanged);
  $('batchAllMonths').onclick=()=>{document.querySelectorAll('#batchMonths input').forEach(n=>n.checked=true);selectionChanged();};
  $('batchNoMonths').onclick=()=>{document.querySelectorAll('#batchMonths input').forEach(n=>n.checked=false);selectionChanged();};
+ $('batchWeeks').onclick=()=>PBT_WEEKS.open({months:chosenMonths(),selected:editorWeeks,opener:$('batchWeeks'),apply:weeks=>{editorWeeks=weeks;selectionChanged();}});
  $('batchExample').onclick=()=>{document.querySelectorAll('[data-batch-day]').forEach(n=>n.checked=true);document.querySelectorAll('[data-batch-partners]').forEach(n=>n.checked=defaults[n.dataset.shift].includes(Number(n.value)));selectionChanged();};
  $('batchAdd').onclick=add;
  $('batchBack').onclick=()=>setOpen(false);
@@ -42,7 +43,7 @@ function setOpen(value){
  if(value){const current=state[activeTab].filters.tienda[0];if(!activeCode&&current){$('batchCeco').value=PBT_DIRECTORY.codeOf(current);storeChanged();}refreshSource();$('batchTitle').focus();window.scrollTo({top:0,behavior:'auto'});}
  else $('createPlansButton').focus();
 }
-window.openCreatePlans=function(){if(!$('batchTitle'))build();setOpen($('batchSection').hidden);};
+window.openCreatePlans=function(forceOpen=false){if(!$('batchTitle'))build();setOpen(forceOpen||$('batchSection').hidden);};
 function storeInfo(){
  const code=$('batchCeco').value.trim(),engine=PBT_WEEKLY?.engine;if(!/^\d{3,8}$/.test(code)||!engine)return null;
  const type=engine.typeOf(code),tab=type==='DT'?'dt':type==='CAFE'?'cafe':null;
@@ -73,17 +74,24 @@ function choices(){
  }
  return result;
 }
+function chosenMonths(){return [...document.querySelectorAll('#batchMonths input:checked')].map(n=>n.value);}
 function selected(){
  const info=storeInfo();if(!info)throw Error('Ingresa un CeCo con datos activos.');
- const months=[...document.querySelectorAll('#batchMonths input:checked')].map(n=>n.value);
- return core.expand({...info,months,partnerTablet:$('batchTablet').value},choices());
+ const months=chosenMonths();PBT_WEEKS.validate(PBT_WEEKLY.engine.pack,months,editorWeeks);
+ return core.expand({...info,months,weeks:editorWeeks,partnerTablet:$('batchTablet').value},choices());
 }
 function selectionChanged(){
  if(!ready()){$('batchAdd').disabled=true;return;}
  let count=0;for(const [day,label]of Object.entries(DAYS)){const on=document.querySelector('[data-batch-day="'+day+'"]')?.checked;const inputs=[...document.querySelectorAll('[data-batch-partners][data-day="'+day+'"]')];inputs.forEach(n=>n.disabled=!on);const n=on?inputs.filter(n=>n.checked).length:0;count+=n;const node=$('batchTotal_'+day);if(node)node.textContent=n+' planes';}
- const monthCount=document.querySelectorAll('#batchMonths input:checked').length;
+ const months=chosenMonths(),monthCount=months.length,signature=months.join('|');
+ if(signature!==editorMonths){editorWeeks=[];editorMonths=signature;}
+ const available=PBT_WEEKS.available(PBT_WEEKLY.engine.pack,months);let weekError=false;
+ try{if(monthCount)PBT_WEEKS.validate(PBT_WEEKLY.engine.pack,months,editorWeeks);}catch{weekError=true;}
+ $('batchWeeks').disabled=!monthCount||!available.length||busy;
+ $('batchWeeksSummary').textContent=weekError?'Las semanas requieren revisión. Pulsa Ver semanas.':!monthCount?'Elige un mes para revisar sus semanas.':(editorWeeks.length||available.length)+' de '+available.length+' semanas · '+(editorWeeks.length?'selección validada':'todas disponibles');
+ $('batchWeeksSummary').classList.toggle('batch-error',weekError);
  $('batchSelection').textContent=count+' combinaciones · '+monthCount+' meses en un período';
- $('batchAdd').textContent='Agregar '+count+' planes al lote';$('batchAdd').disabled=!storeInfo()||!monthCount||!count||busy;
+ $('batchAdd').textContent='Agregar '+count+' planes al lote';$('batchAdd').disabled=!storeInfo()||!monthCount||!count||busy||weekError;
 }
 function refreshSource(){
  if(!$('batchTitle'))return;
@@ -110,7 +118,7 @@ function add(){
 function renderQueue(){
  if(busy)return;
  let invalid=0;
- $('batchQueue').innerHTML=jobs.length?jobs.map((job,i)=>{const {error,snapshot}=validate(job);if(error)invalid++;return '<article class="batch-job'+(error?' batch-job-error':'')+'"><div class="batch-job-top"><strong>CeCo '+job.ceco+' · '+(job.tab==='dt'?'DT':'Café')+'</strong><span class="batch-job-status">'+(error?'Revisar':'Listo')+'</span></div><p>'+esc(job.months.join(', '))+'</p><h3>'+DAYS[job.weekpart]+' · '+SHIFTS[job.daypart]+' · '+job.partners+' partners</h3>'+(job.tab==='dt'?'<small>Tablet: '+job.partnerTablet+'</small>':'')+(error?'<p class="batch-error">'+esc(error)+'</p>':'<small>'+Number(snapshot.units).toLocaleString('es-MX')+' unidades seleccionadas</small>')+'<div class="batch-job-actions"><button type="button" data-preview="'+i+'" '+(error?'disabled':'')+'>Vista previa</button><button type="button" data-remove="'+i+'" aria-label="Quitar plan '+(i+1)+'">Quitar</button></div></article>';}).join(''):'<div class="batch-empty"><span aria-hidden="true">＋</span><strong>Tu primer lote empieza aquí</strong><p>Selecciona tus combinaciones y pulsa Agregar al lote. Puedes reunir varias tiendas y períodos.</p></div>';
+ $('batchQueue').innerHTML=jobs.length?jobs.map((job,i)=>{const {error,snapshot}=validate(job);if(error)invalid++;return '<article class="batch-job'+(error?' batch-job-error':'')+'"><div class="batch-job-top"><strong>CeCo '+job.ceco+' · '+(job.tab==='dt'?'DT':'Café')+'</strong><span class="batch-job-status">'+(error?'Revisar':'Listo')+'</span></div><p>'+esc(job.months.join(', '))+(job.weeks?.length?' · '+esc(PBT_WEEKS.label(job.weeks)):' · Todas las semanas disponibles')+'</p><h3>'+DAYS[job.weekpart]+' · '+SHIFTS[job.daypart]+' · '+job.partners+' partners</h3>'+(job.tab==='dt'?'<small>Tablet: '+job.partnerTablet+'</small>':'')+(error?'<p class="batch-error">'+esc(error)+'</p>':'<small>'+Number(snapshot.units).toLocaleString('es-MX')+' unidades seleccionadas</small>')+'<div class="batch-job-actions"><button type="button" data-preview="'+i+'" '+(error?'disabled':'')+'>Vista previa</button><button type="button" data-remove="'+i+'" aria-label="Quitar plan '+(i+1)+'">Quitar</button></div></article>';}).join(''):'<div class="batch-empty"><span aria-hidden="true">＋</span><strong>Tu primer lote empieza aquí</strong><p>Selecciona tus combinaciones y pulsa Agregar al lote. Puedes reunir varias tiendas y períodos.</p></div>';
  $('batchCount').textContent=jobs.length;$('batchSummary').textContent=jobs.length?(jobs.length+' PDF · '+new Set(jobs.map(j=>j.ceco)).size+' tiendas'+(invalid?' · '+invalid+' por revisar':'')):'Aún no hay planes en el lote.';
  $('batchGenerate').textContent='Crear ZIP con '+jobs.length+' planes';$('batchGenerate').disabled=!jobs.length||!!invalid||!ready();
  $('batchClear').disabled=!jobs.length;
@@ -120,7 +128,7 @@ function showPreview(index){
  const s=result.snapshot;previewIndex=index;
  $('batchPreviewTitle').textContent='Plan '+(index+1)+' de '+jobs.length;
  const metrics=items=>items.map(([label,value])=>'<div><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>').join('');
- $('batchPreviewBody').innerHTML='<p class="batch-preview-store">'+esc(s.store)+'</p><p>'+esc(s.selectedMonths.join(', '))+'</p><h3>'+esc(s.days)+' · '+esc(s.daypart)+' · '+s.partners+' partners</h3><div class="batch-preview-metrics">'+metrics(s.channels)+metrics(s.mix)+'</div><div class="layout-wrap" tabindex="0" role="region" aria-label="Plano del lote"><div class="layout"><div class="sheet-grid" style="height:'+(1000/PBT_SHEET[s.tab].rows)+'%">'+staticLayout(s.tab)+s.areas.map(a=>'<div class="'+a.classes.join(' ')+'" style="left:'+a.left+'%;top:'+a.top+'%;width:'+a.width+'%;height:'+a.height+'%"><span class="marker-letter">'+esc(a.letter)+'</span><span class="marker-name">'+esc(a.name)+'</span></div>').join('')+'</div></div></div><div class="table-wrap"><table><thead><tr><th>Partner</th><th>Estación</th><th>Fijo</th><th>Rutinas</th></tr></thead><tbody>'+s.routines.map(r=>'<tr><td>'+esc(r.partner)+'</td><td>'+esc(r.station)+'</td><td>'+esc(r.fixed)+'</td><td>'+esc(r.routine)+'</td></tr>').join('')+'</tbody></table></div><p class="batch-hint">El PDF usa la misma plantilla Carta y el mismo plano original.</p>';
+ $('batchPreviewBody').innerHTML='<p class="batch-preview-store">'+esc(s.store)+'</p><p>'+esc(s.selectedMonths.join(', '))+(s.selectedWeeks?.length?' · '+esc(PBT_WEEKS.label(s.selectedWeeks)):' · Todas las semanas disponibles')+'</p><h3>'+esc(s.days)+' · '+esc(s.daypart)+' · '+s.partners+' partners</h3><div class="batch-preview-metrics">'+metrics(s.channels)+metrics(s.mix)+'</div><div class="layout-wrap" tabindex="0" role="region" aria-label="Plano del lote"><div class="layout"><div class="sheet-grid" style="height:'+(1000/PBT_SHEET[s.tab].rows)+'%">'+staticLayout(s.tab)+s.areas.map(a=>'<div class="'+a.classes.join(' ')+'" style="left:'+a.left+'%;top:'+a.top+'%;width:'+a.width+'%;height:'+a.height+'%"><span class="marker-letter">'+esc(a.letter)+'</span><span class="marker-name">'+esc(a.name)+'</span></div>').join('')+'</div></div></div><div class="table-wrap"><table><thead><tr><th>Partner</th><th>Estación</th><th>Fijo</th><th>Rutinas</th></tr></thead><tbody>'+s.routines.map(r=>'<tr><td>'+esc(r.partner)+'</td><td>'+esc(r.station)+'</td><td>'+esc(r.fixed)+'</td><td>'+esc(r.routine)+'</td></tr>').join('')+'</tbody></table></div><p class="batch-hint">El PDF usa la misma plantilla Carta y el mismo plano original.</p>';
  $('batchPreview').showModal();
 }
 function setBusy(value){

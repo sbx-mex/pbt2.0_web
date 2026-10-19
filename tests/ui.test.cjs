@@ -101,3 +101,16 @@ test('incomplete catalogs and unsupported combinations cannot export a fabricate
  c.renderDataTab('cafe');assert.equal(f.node('cafe_export').disabled,true);assert.match(f.node('cafe_layout').innerHTML,/Preparando el plan/);assert.throws(()=>c.buildPBTSnapshot('cafe'),/Espera/);
  c.PBT_PLAN.ready=true;c.getPlay=()=>({play:undefined});c.renderDataTab('cafe');assert.equal(f.node('cafe_export').disabled,true);assert.match(f.node('cafe_layout').innerHTML,/No existe un plan original/);assert.equal(f.node('cafe_tbody').innerHTML,'');assert.throws(()=>c.buildPBTSnapshot('cafe'),/plan original/);
 });
+
+test('chosen weeks persist by CeCo and stale weeks block calculation and PDF export',()=>{
+ const f=fixture(),c=f.context;c.PBT_WEEKS=require('../js/weeks.js');f.engine.pack={weeks:[{id:'202601',label:'Ene 2026'},{id:'202602',label:'Ene 2026'}]};
+ c.PBT_DEVICE.set('session',{cafe:{store:'CeCo 38333',mes:['Ene 2026'],semana:['202602'],mode:'manual',weekpart:'Weekday',daypart:'Morning',partners:4}});c.restorePBTSession();
+ c.calculate('cafe');assert.equal(f.filters.Semana[0],'202602');c.savePBTSession();assert.equal(c.PBT_DEVICE.get('session').cafe.semana[0],'202602');
+ const snapshot=c.buildPBTSnapshot('cafe');assert.match(snapshot.comments,/Semanas 2026 · S02/);assert.equal(snapshot.selectedWeeks[0],'202602');
+ c.state.cafe.filters.semana=['202603'];const before=f.calls;assert.equal(c.calculate('cafe').valid,false);assert.equal(f.calls,before);c.renderDataTab('cafe');assert.equal(f.node('cafe_export').disabled,true);assert.throws(()=>c.buildPBTSnapshot('cafe'),/Ver semanas/);
+});
+test('changing months clears old week choices before calculation',()=>{
+ const f=fixture(),c=f.context;c.state.cafe.filters.semana=['202601'];c.selectAllMS('cafe','mes');assert.equal(c.state.cafe.filters.semana.length,0);
+ c.state.cafe.filters.semana=['202601'];c.document.querySelectorAll=selector=>selector.endsWith('input:checked')?[{value:'Feb 2026'}]:[{value:'Ene 2026'},{value:'Feb 2026'}];
+ c.changeMS('cafe','mes');assert.equal(c.state.cafe.filters.semana.length,0);assert.equal(c.state.cafe.filters.mes[0],'Feb 2026');
+});

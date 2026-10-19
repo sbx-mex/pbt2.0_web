@@ -10,13 +10,14 @@
   const result=PBT_DEVICE.set('team:'+ceco,value);message('Guardando…');
   result.then(ok=>{if(code(activeTab)===ceco)message(ok?'Guardado en este dispositivo':'No se pudo guardar. Conserva esta ventana abierta y libera espacio.',!ok);});return result;
  }
- function settings(tab){const s=state[tab];return {mode:s.mode,partners:s.partners,partnerTablet:s.partnerTablet||'No',mes:s.filters.mes.slice(),weekpart:s.filters.weekpart[0],daypart:s.filters.daypart[0]};}
+ function settings(tab){const s=state[tab];return {mode:s.mode,partners:s.partners,partnerTablet:s.partnerTablet||'No',mes:s.filters.mes.slice(),semana:(s.filters.semana||[]).slice(),weekpart:s.filters.weekpart[0],daypart:s.filters.daypart[0]};}
  function applySettings(tab,p){
   if(!p||typeof p!=='object')return;const s=state[tab];
   if(['auto','manual'].includes(p.mode))s.mode=p.mode;
   if(Number.isInteger(p.partners)&&p.partners>=2&&p.partners<=config[tab].maxPartners)s.partners=p.partners;
   if(tab==='dt')s.partnerTablet=p.partnerTablet==='Sí'?'Sí':'No';
   if(Array.isArray(p.mes))s.filters.mes=p.mes.filter(v=>typeof v==='string'&&/^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic) \d{4}$/.test(v));
+  s.filters.semana=Array.isArray(p.semana)?[...new Set(p.semana.filter(v=>typeof v==='string'&&/^20\d{2}(?:0[1-9]|[1-4]\d|5[0-3])$/.test(v)))].sort():[];
   if(['Weekday','Weekend'].includes(p.weekpart))s.filters.weekpart=[p.weekpart];
   if(['Morning','Lunch','Afternoon'].includes(p.daypart))s.filters.daypart=[p.daypart];
  }

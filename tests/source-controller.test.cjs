@@ -74,3 +74,12 @@ test('a damaged saved repository is not shown and is replaced only by a verified
  const f=fixture(network,{repository:{text:repository.text+'x',manifest:repository.manifest},kind:'repo'});await f.start();
  assert.equal(f.context.PBT_WEEKLY.ready,true);assert.equal(f.stored.repository.text,repository.text);assert.equal(f.context.PBT_WEEKLY.engine.calculate({},'CAFE').unidades,100);
 });
+
+test('removing the three local CSV controls and file inputs does not break startup or repository loading',async()=>{
+ const f=fixture(publisher(await makePack()));const original=f.context.document.getElementById;
+ f.context.document.getElementById=id=>['openMotorFolder','reloadMotorFolder','pickMotorCsv','motorFolderInput','motorFilesInput'].includes(id)?null:original(id);
+ await f.start();assert.equal(f.context.PBT_WEEKLY.ready,true);assert.equal(f.context.PBT_WEEKLY.loading,false);
+});
+test('source refresh retains explicit weeks for revalidation instead of silently calculating all weeks',async()=>{
+ const f=fixture(publisher(await makePack()));f.state.cafe.filters.semana=['202602'];await f.start();assert.equal(f.state.cafe.filters.semana[0],'202602');
+});

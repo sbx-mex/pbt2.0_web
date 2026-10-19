@@ -54,7 +54,7 @@
       status.textContent=error?'La carga necesita atención. Reintenta para recuperar tu plan.':!source.ready?'Cargando y verificando los datos de las tiendas…':!plan.ready?'Los datos están listos. Preparando el catálogo de planes…':selected?'Plan listo · tus filtros se guardan en este dispositivo.':'Elige Café o DT y busca una tienda por nombre o CeCo para empezar.';
       if(source.ready&&plan.ready&&selected){var button=document.getElementById(activeTab+'_export');if(button&&button.disabled&&!window.PBT_EXPORT_BUSY)status.textContent='Revisa los filtros: todavía no hay un plan disponible para exportar.';}
     }
-    if(window.state)for(var tab of ['cafe','dt']){var context=document.getElementById(tab+'_context'),current=state[tab];if(context)context.textContent=current.filters.tienda.length?pbtStoreLabel(current.filters.tienda[0])+' · '+(current.filters.mes.join(', ')||'Todos los meses disponibles')+' · '+pbtWeekLabel(current.filters.weekpart[0])+' · '+pbtDayLabel(current.filters.daypart[0])+' · '+current.partners+' partners':'';}
+    if(window.state)for(var tab of ['cafe','dt']){var context=document.getElementById(tab+'_context'),current=state[tab];if(context)context.textContent=current.filters.tienda.length?pbtStoreLabel(current.filters.tienda[0])+' · '+(current.filters.mes.join(', ')||'Todos los meses disponibles')+(current.filters.semana?.length?' · '+PBT_WEEKS.label(current.filters.semana):'')+' · '+pbtWeekLabel(current.filters.weekpart[0])+' · '+pbtDayLabel(current.filters.daypart[0])+' · '+current.partners+' partners':'';}
   };
   function markReady(){
     var chip=document.getElementById('readyChip'),loader=document.getElementById('appLoading');

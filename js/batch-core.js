@@ -2,6 +2,7 @@
 (function(root){
 'use strict';
 const MONTHS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const weekTools=typeof module!=='undefined'&&module.exports?require('./weeks.js'):root.PBT_WEEKS;
 const DAYS=['Weekday','Weekend'],SHIFTS=['Morning','Lunch','Afternoon'],MAX=120;
 function monthCode(value){const m=/^(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic) (20\d{2})$/.exec(value);if(!m)throw Error('Mes inválido.');return m[2]+'-'+String(MONTHS.indexOf(m[1])+1).padStart(2,'0');}
 function normalize(job){
@@ -10,7 +11,8 @@ function normalize(job){
  if(!months.length||months.length>24)throw Error('Selecciona entre 1 y 24 meses.');
  const partners=Number(job.partners);
  if(!DAYS.includes(job.weekpart)||!SHIFTS.includes(job.daypart)||!Number.isInteger(partners)||partners<2||partners>(job.tab==='dt'?13:11))throw Error('Combinación de turno o partners no válida.');
- return {ceco:String(job.ceco),tab:job.tab,months,weekpart:job.weekpart,daypart:job.daypart,partners,partnerTablet:job.tab==='dt'&&job.partnerTablet==='Sí'?'Sí':'No'};
+ const weeks=weekTools.ids(job.weeks||[]);
+ return {...(weeks.length?{weeks}:{}),ceco:String(job.ceco),tab:job.tab,months,weekpart:job.weekpart,daypart:job.daypart,partners,partnerTablet:job.tab==='dt'&&job.partnerTablet==='Sí'?'Sí':'No'};
 }
 function key(job){return JSON.stringify(normalize(job));}
 function expand(base,choices){const jobs=[];for(const weekpart of DAYS)for(const daypart of SHIFTS)for(const partners of [...new Set(choices[weekpart]?.[daypart]||[])].sort((a,b)=>a-b))jobs.push(normalize({...base,weekpart,daypart,partners}));return jobs;}
@@ -25,7 +27,7 @@ function periodName(months){
 }
 function pdfName(job){
  const j=normalize(job),day=j.weekpart==='Weekday'?'1-Lun-Jue':'2-Vie-Dom',shift={Morning:'1-Manana',Lunch:'2-Intermedio',Afternoon:'3-Tarde'}[j.daypart];
- const name=['PBT',j.ceco,periodName(j.months),day,shift,String(j.partners).padStart(2,'0')+'Partners',j.tab==='dt'?'DT_Tablet-'+(j.partnerTablet==='Sí'?'Si':'No'):'CAFE'].join('_')+'.pdf';
+ const name=['PBT',j.ceco,periodName(j.months)+(j.weeks?.length?'_S'+weekTools.token(j.weeks):''),day,shift,String(j.partners).padStart(2,'0')+'Partners',j.tab==='dt'?'DT_Tablet-'+(j.partnerTablet==='Sí'?'Si':'No'):'CAFE'].join('_')+'.pdf';
  if(name.length>255)throw Error('El nombre del período es demasiado largo. Divide los meses en dos lotes.');
  return name;
 }
