@@ -19,3 +19,17 @@ test('runtime JSON lookup preserves every original candidate, play and routine',
  let count=0;for(const tab of ['cafe','dt'])for(const partners of Object.keys(compact.playRuns[tab]))for(let i=0;i<compact[tab+'Candidates'].length;i++){assert.equal(runtime.lookupPlay(tab,partners,runtime[tab+'Candidates'][i]),compact.lookupPlay(tab,partners,compact[tab+'Candidates'][i]));count++;}
  assert.equal(count,459256);for(const key of ['routines','coords','channelProd'])assert.deepEqual(runtime[key],compact[key]);
 });
+
+test('missing, damaged or unreadable gzip recovers only through verified plain JSON',async()=>{
+ const plain=Buffer.from('{"estado":"correcto"}'),zip=gzipSync(plain),m={...meta(plain),gzip:{path:'catalog.json.gz',...meta(zip)}};
+ for(const compressed of [()=>new Response('missing',{status:404}),()=>new Response(Buffer.from('damaged')),()=>{throw Error('connection lost');}]){
+  const routes=[];const result=await assets.text(async url=>{routes.push(url);return url.includes('.gz?')?compressed():new Response(plain);},'data/plan/catalog.json',m);
+  assert.equal(result.text,plain.toString());assert.equal(routes.length,2);
+ }
+ await assert.rejects(assets.text(async()=>new Response(Buffer.from('corrupt')),'data/plan/catalog.json',m),/coincide/);
+});
+test('cancelled gzip never starts a second download',async()=>{
+ const controller=new AbortController(),plain=Buffer.from('{}'),zip=gzipSync(plain);let calls=0;
+ await assert.rejects(assets.text(async()=>{calls++;controller.abort();throw new DOMException('cancelled','AbortError');},'data/plan/catalog.json',{...meta(plain),gzip:{path:'catalog.json.gz',...meta(zip)}},{signal:controller.signal}),{name:'AbortError'});
+ assert.equal(calls,1);
+});

@@ -49,13 +49,19 @@
  }
  async function parseMotor(buffer,path){
   if(!buffer.byteLength||buffer.byteLength>25*1024*1024)throw Error('CSV vacío o mayor a 25 MB: '+path);
-  const text=decode(buffer),lines=text.split(/\r?\n/);let start=-1,delimiter;
+  const text=decode(buffer),lines=text.split(/\r?\n/);let start=-1,delimiter,wrapped=false;
   for(let i=0;i<Math.min(100,lines.length)&&start<0;i++)for(const candidate of [',',';','\t']){
    let fields;try{fields=splitCSV(lines[i],candidate)[0]||[];}catch{continue;}
    if(HEADERS.every(name=>fields.includes(name))){start=i;delimiter=candidate;break;}
+   if(fields.length===1){
+    let nested;try{nested=splitCSV(fields[0],candidate)[0]||[];}catch{continue;}
+    if(HEADERS.every(name=>nested.includes(name))){start=i;delimiter=candidate;wrapped=true;break;}
+   }
   }
   if(start<0)throw Error(path+': faltan columnas de Mix de Producto');
-  const rows=splitCSV(lines.slice(start).join('\n'),delimiter),headers=rows.shift();
+  let table=lines.slice(start).join('\n');
+  if(wrapped){const outer=splitCSV(table,delimiter);if(outer.some(row=>row.length!==1))throw Error(path+': envoltura CSV inconsistente; no se omiten registros');table=outer.map(row=>row[0]).join('\n');}
+  const rows=splitCSV(table,delimiter),headers=rows.shift();
   if(new Set(headers).size!==headers.length)throw Error(path+': encabezados duplicados');
   const indices=Object.fromEntries(headers.map((name,i)=>[name,i]));
   const groups=new Map(),seen=new Set(),weeks=new Set(),dt=new Set();let units=0,unitsAA=0,negativeRows=0,hasAA=headers.includes('Unidades AA');

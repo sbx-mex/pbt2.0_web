@@ -107,3 +107,16 @@ test('available store lists exclude zero-unit stores and separate current DT evi
  assert.deepEqual(e.availableStores('CAFE'),['CeCo 38101']);assert.deepEqual(e.availableStores('DT'),['CeCo 38134']);
  assert.equal(e.typeOf('CeCo 38144'),'DT');assert.equal(e.stores().length,4);
 });
+
+test('single-column CSV envelope preserves separators, negatives and AA exactly',async()=>{
+ const text='Tiendas,Semana,Clas_Semana,DayPart,Distribucion Canal,Mix de Producto,Unidades,Unidades AA\n'+
+ '38101,202642,Lun-Jue,1_Mañana,Lobby,Espresso,"1,250",900\n'+
+ '38101,202642,Lun-Jue,1_Mañana,Lobby,Food,"(1,234)",-3.5\n';
+ const wrap=line=>'"'+line.replace(/"/g,'""')+'"';
+ const wrapped='Reporte\n\n'+text.trim().split('\n').map(wrap).join('\n');
+ const parse=value=>core.parseMotor(new TextEncoder().encode(value).buffer,'test.csv');
+ const normal=await parse(text),recovered=await parse(wrapped);
+ assert.deepEqual(recovered.rows,normal.rows);assert.equal(recovered.file.units,16);assert.equal(recovered.file.unitsAA,896.5);
+ await assert.rejects(parse(wrap(text.split('\n')[0])+'\n'+text.split('\n')[1]),/inconsistente/);
+ await assert.rejects(parse(wrapped+'\n"open'),/sin cerrar/);
+});

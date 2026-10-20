@@ -11,9 +11,9 @@ import json
 from pathlib import Path
 import subprocess
 try:
-    from .build_weekly_motor import ROOT, decode, number, week_info
+    from .build_weekly_motor import ROOT, decode, number, week_info, csv_table
 except ImportError:
-    from build_weekly_motor import ROOT, decode, number, week_info
+    from build_weekly_motor import ROOT, decode, number, week_info, csv_table
 
 MIX=['Espresso','COD','CBS','Food','Otro']
 CHANNEL=['Lobby','Pick up & Delivery','DT']
@@ -24,14 +24,9 @@ def audit(root=ROOT):
     pack=json.loads((root/'data/motores/indice.json').read_text(encoding='utf-8'))
     stores=dict(pack['stores']);raw=defaultdict(lambda:[Decimal(0)]*18);dt=set();row_count=0
     for meta in pack['files']:
-        text=decode((root/'data/motores'/meta['path']).read_bytes());lines=text.splitlines()
-        for offset,line in enumerate(lines[:100]):
-            for delimiter in [',',';','\t']:
-                fields=next(csv.reader([line],delimiter=delimiter))
-                if 'Unidades' in fields and 'Tiendas' in fields:break
-            else:continue
-            break
-        for source in csv.DictReader(io.StringIO('\n'.join(lines[offset:])),delimiter=delimiter):
+        text=decode((root/'data/motores'/meta['path']).read_bytes())
+        table, _, delimiter, _ = csv_table(text, meta['path'])
+        for source in csv.DictReader(io.StringIO(table),delimiter=delimiter):
             r={k:str(v or '').strip() for k,v in source.items()};amount=number(r['Unidades']);aa=number(r.get('Unidades AA',''))
             code=r['Tiendas'];key=(code,week_info(r['Semana'])['label'],DAYS[r['Clas_Semana']],PARTS[r['DayPart']]);target=raw[key]
             for start,value in [(0,amount),(9,aa)]:

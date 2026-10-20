@@ -1,53 +1,43 @@
-# PBT Web 2.0 · V27
+# PBT Web 2.0 · corrección de carga S42
 
-Mejora de arranque, navegación y publicación sobre `sbx-mex/pbt2.0_web`, commit `c3a5437ac01f2adff857d5bec99395eb13563793` del 18 de octubre de 2026. Conserva el motor original PBT.24, sus coordenadas, rutinas, desempates, calendario 4-4-5, porcentajes por unidades y formato de PDF carta.
+Sitio: https://sbx-mex.github.io/pbt2.0_web/
 
-## Abrir la copia lista del ZIP
+La lectura de motores recupera CSV cuyas filas fueron exportadas dentro de una sola celda. Python y JavaScript validan columnas, categorías, duplicados, unidades y AA sin modificar los CSV originales. El índice incluido contiene las semanas S01 a S42 de 2026.
 
-Descomprime **todo el ZIP** y ejecuta **INICIAR_PBT.bat** en Windows. Requiere Python 3.10 o posterior. En macOS/Linux: `python3 iniciar.py`. Abre PBT en `http://127.0.0.1:8765/`; mantén abierta la consola. No abras `index.html` con doble clic.
+## Publicación
 
-La carpeta `PBT_LISTO` del paquete contiene el sitio preparado y los datos auditados. No necesita Node, paquetes Python, cuenta, ni conexión externa para abrirse mediante el servidor local. La URL y el navegador determinan dónde se guarda tu equipo: el equipo capturado en GitHub Pages no aparece automáticamente en localhost.
+Los archivos y carpetas de esta actualización van directamente en la raíz de `main`, conservando su estructura y sustituyendo las versiones anteriores. No subas el archivo ZIP como archivo del repositorio: extrae y sube su contenido.
 
-## Actualizar el repositorio
+Mantén **Settings → Pages → Source → GitHub Actions**. El workflow existente `motores-semanales.yml` reconstruye y valida el sitio antes de publicarlo. Conserva los CSV originales en `data/motores` y los demás archivos del repositorio.
 
-El ZIP incluye `actualizar_pbt.py` y `actualizacion/`. Desde la carpeta del ZIP:
+## Validación local
 
-```bash
-python actualizar_pbt.py "RUTA_A_TU_REPOSITORIO"
-python actualizar_pbt.py "RUTA_A_TU_REPOSITORIO" --aplicar
-```
-
-El primer comando revisa sin modificar. El segundo requiere Python 3.12 y Node 22 o posterior: comprueba la versión y las fuentes, valida una copia temporal, crea un respaldo y aplica sólo los archivos del paquete. Retira `js/data.js` y `icons/.gitkeep` sólo si su contenido coincide con el obsoleto auditado. Si encuentra cambios posteriores, se detiene para conservarlos. No borra CSV, nombres ni fotos. Revisa `git diff`, confirma los cambios y súbelos a `main`.
-
-Restauración, antes de hacer nuevas ediciones:
-
-```bash
-python actualizar_pbt.py --restaurar "RUTA_DEL_RESPALDO" --aplicar
-```
-
-El respaldo se crea junto al repositorio. La restauración rechaza archivos editados después de instalar. Si hay cambios posteriores, el respaldo conserva los originales para recuperarlos manualmente.
-
-## Publicación y carga
-
-Conserva **Settings → Pages → Source → GitHub Actions**. El workflow `motores-semanales.yml` ejecuta Python antes de publicar. No subas la carpeta completa del ZIP a la raíz de GitHub: usa el instalador; `PBT_LISTO` es la copia local preparada.
-
-- La interfaz aparece sin esperar el catálogo grande. Una descarga incompleta muestra un error con recuperación; no se exportan planes incompletos ni se inventa un plan para un solo partner.
-- Python genera JSON y gzip con SHA-256; se verifica la descarga comprimida y su contenido. Navegadores sin descompresión nativa reciben el JSON verificado.
-- El catálogo y el índice actuales pasan de 24.9 MB a 5.8 MB de carga útil, 76.8% menos en navegadores compatibles. Son bytes de datos; el tiempo real depende de la conexión y el equipo.
-- Cada compilación genera una identificación de contenido para los recursos y la caché. No es necesario editar números de versión al agregar una semana.
-- El plan queda disponible en la caché tras completar la instalación. Los motores guardados se recuperan al abrir sin red. La primera visita a GitHub Pages necesita conexión; borrar datos del navegador elimina los respaldos locales.
-- Filtros, Plan y Rutinas tienen accesos directos; se mantienen Café/DT, búsqueda por CeCo, equipo por tienda y PDF.
-- Scripts locales, sin ejecución inline ni `eval`. La publicación excluye CSV crudos, scripts de construcción y motor JS de 23.9 MB. El servidor local sólo sirve archivos públicos del sitio y escucha en este equipo.
-
-## Revisión reproducible
-
-Sin paquetes adicionales para los controles de Python/Node:
+Requiere Python 3.12 y Node 22 o posterior. Usa una carpeta de salida nueva:
 
 ```bash
 python scripts/validate_update.py --site _site
+python scripts/audit_sample_stores.py --output reports/muestra-tiendas.json
 python iniciar.py --site _site
 ```
 
-Usa una carpeta de salida nueva. Los siete controles de origen generan el catálogo y el índice, validan el directorio, ejecutan pruebas, concilian porcentajes y verifican fidelidad; una revisión adicional del sitio preparado comprueba enlaces, política de scripts y compresión. Se prueban las 459,256 búsquedas originales. El índice base tenía 26 semanas y los CSV actuales 31; siempre se reconstruye desde las fuentes antes de publicar.
+No abras `index.html` directamente; consulta el sitio preparado mediante el servidor local o GitHub Pages.
 
-El ZIP incluye un informe con resultados reales de las pruebas de navegador. Las comprobaciones automáticas no equivalen a una prueba física en cada teléfono. La seguridad de carga y publicación no añade autenticación: el repositorio y GitHub Pages conservan su visibilidad pública actual. No subas credenciales ni información privada al repositorio.
+## Correcciones incluidas
+
+- Lectura estricta de una capa adicional de CSV en Python y navegador.
+- Índice y manifiesto reconstruidos para 42 semanas y 984 tiendas.
+- Recuperación mediante JSON verificado si falla gzip; conserva controles de tamaño, SHA-256 y cancelación.
+- Íconos de 192 y 512 píxeles optimizados e incluidos en la caché sin conexión.
+- Pruebas de regresión y muestra reproducible de 10 tiendas, con seis contextos por tienda.
+
+Sobre el commit base `00190126c9d0492d2be5eef8ba72122a42569d81` se aprobaron 45 pruebas Python, 102 pruebas Node, 3,888 conciliaciones y 60 casos adicionales sin diferencias. Se verificaron Café, DT, PDF, ZIP de 20 planes, vista móvil y recarga sin conexión. Se conservan el motor PBT.24, sus 459,256 búsquedas, el calendario 4-4-5 y las reglas de porcentajes por unidades.
+
+Para obtener una copia convencional de un CSV sin sobrescribir el original:
+
+```bash
+python scripts/repair_csv.py "data/motores/Base_Canal_Mix de Producto_42.csv" --output "copias/semana42.csv"
+```
+
+No agregues una segunda versión de la misma semana dentro de `data/motores`.
+
+Si el campo Website de About sigue apuntando a `sbx-mx.github.io`, corrígelo a `https://sbx-mex.github.io/pbt2.0_web/`. Ese ajuste pertenece a la configuración de GitHub.

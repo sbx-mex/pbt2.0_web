@@ -20,10 +20,17 @@
    metadata(meta.gzip,max);
    if(!/^[a-zA-Z0-9_-]+\.json\.gz$/.test(meta.gzip.path))throw Error('Ruta comprimida no válida.');
    const target=url.replace(/[^/]*$/,meta.gzip.path)+'?sha256='+meta.gzip.sha256;
-   response=await fetcher(target,{cache:'default',signal:options.signal});
-   data=await checked(await bytes(response,meta.gzip.bytes,options.signal),meta.gzip);
-   const stream=new Blob([data]).stream().pipeThrough(new DecompressionStream('gzip'));
-   data=await bytes(new Response(stream),meta.bytes,options.signal);
+   try{
+    response=await fetcher(target,{cache:'default',signal:options.signal});
+    data=await checked(await bytes(response,meta.gzip.bytes,options.signal),meta.gzip);
+    const stream=new Blob([data]).stream().pipeThrough(new DecompressionStream('gzip'));
+    data=await checked(await bytes(new Response(stream),meta.bytes,options.signal),meta);
+   }catch(error){
+    if(options.signal?.aborted||error.name==='AbortError')throw error;
+    // The independent JSON copy must pass the same length and SHA-256 checks.
+    response=await fetcher(url+'?sha256='+meta.sha256,{cache:'no-cache',signal:options.signal});
+    data=await bytes(response,meta.bytes,options.signal);
+   }
   }else{
    response=await fetcher(url+'?sha256='+meta.sha256,{cache:'default',signal:options.signal});
    data=await bytes(response,meta.bytes,options.signal);

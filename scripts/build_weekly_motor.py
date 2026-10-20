@@ -67,24 +67,48 @@ def week_info(value: str) -> dict:
 
 
 
+def csv_table(text: str, filename: str = 'CSV') -> tuple[str, int, str, bool]:
+    """Recover exactly one full-row CSV envelope, never remove quotes blindly.
+
+    Some spreadsheet exports wrap every record in one quoted cell. Detect the
+    required header after a second CSV parse and require the same envelope on
+    every data row. Normal CSV retains its existing quoting and delimiter.
+    """
+    lines = text.splitlines(keepends=True)
+    for index, line in enumerate(lines[:100]):
+        for delimiter in [',', ';', '\t']:
+            try:
+                fields = next(csv.reader([line], delimiter=delimiter, strict=True), [])
+            except csv.Error:
+                continue
+            if all(name in fields for name in HEADERS):
+                return ''.join(lines[index:]), index, delimiter, False
+            if len(fields) != 1:
+                continue
+            try:
+                nested = next(csv.reader(fields, delimiter=delimiter, strict=True), [])
+            except csv.Error:
+                continue
+            if not all(name in nested for name in HEADERS):
+                continue
+            recovered = []
+            for offset, outer in enumerate(csv.reader(io.StringIO(''.join(lines[index:])), delimiter=delimiter, strict=True), index + 1):
+                if not outer:
+                    continue
+                if len(outer) != 1:
+                    raise MotorError(f'{filename}:{offset}: envoltura CSV inconsistente; no se omiten registros')
+                recovered.append(outer[0])
+            return '\n'.join(recovered) + '\n', index, delimiter, True
+    raise MotorError(f'{filename}: faltan columnas requeridas de Mix de Producto')
+
+
 def parse_motor(path: Path) -> dict:
     if path.is_symlink() or not path.is_file() or not 0 < path.stat().st_size <= MAX_FILE:
         raise MotorError(f'CSV ausente, vacío o mayor a 25 MB: {path.name}')
     data = path.read_bytes()
     text = decode(data)
-    lines = text.splitlines(keepends=True)
-    header_line, delimiter = None, None
-    for index, line in enumerate(lines[:100]):
-        for candidate in [',',';','\t']:
-            fields = next(csv.reader([line], delimiter=candidate), [])
-            if all(name in fields for name in HEADERS):
-                header_line, delimiter = index, candidate
-                break
-        if header_line is not None:
-            break
-    if header_line is None:
-        raise MotorError(f'{path.name}: faltan columnas requeridas de Mix de Producto')
-    reader = csv.DictReader(io.StringIO(''.join(lines[header_line:])), delimiter=delimiter, strict=True)
+    table, header_line, delimiter, wrapped = csv_table(text, path.name)
+    reader = csv.DictReader(io.StringIO(table), delimiter=delimiter, strict=True)
     if len(reader.fieldnames) != len(set(reader.fieldnames)):
         raise MotorError(f'{path.name}: encabezados duplicados')
     groups = {}
